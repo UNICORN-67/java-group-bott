@@ -42,7 +42,7 @@ async def handle_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 if __name__ == '__main__':
     # REPLACE 'YOUR_BOT_TOKEN' with the token you got from @BotFather
-    application = ApplicationBuilder().token('7740494854:AAFEgBYHVdcQEAAh7GpPRf0tqLBoq_wzZeA').build()
+    application = ApplicationBuilder().token('7740494854:AAFmjCNy4FC-LOGPb3epFZiqoGPmx9s9PU4').build()
     
     # Handlers
     application.add_handler(CommandHandler("start", start))
