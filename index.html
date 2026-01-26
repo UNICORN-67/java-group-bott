@@ -3,75 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <title>Nexus Hub - Profile</title>
-    <meta property="og:title" content="Nexus Hub Pro">
-    <meta property="og:description" content="Check out my Telegram profile card!">
-    <meta property="og:image" content="https://ui-avatars.com/api/?name=Nexus&background=3390ec&color=fff&size=512">
-    <meta property="og:type" content="website">
-
+    <title>Nexus Hub</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
     <style>
         :root {
             --bg-color: var(--tg-theme-bg-color, #ffffff);
             --sec-bg: var(--tg-theme-secondary-bg-color, #f4f4f5);
             --text-color: var(--tg-theme-text-color, #222222);
             --hint-color: var(--tg-theme-hint-color, #999999);
-            --link-color: var(--tg-theme-link-color, #3390ec);
             --button-color: var(--tg-theme-button-color, #3390ec);
             --button-text: var(--tg-theme-button-text-color, #ffffff);
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
+            padding-top: 30px;
         }
 
+        /* Foldable Card Container */
         .profile-card {
             background: var(--sec-bg);
-            padding: 30px;
-            border-radius: 24px;
-            width: 85%;
-            max-width: 350px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            transition: transform 0.1s ease;
+            width: 90%;
+            max-width: 360px;
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            height: 80px; /* Folded */
         }
 
-        .profile-card:active {
-            transform: scale(0.98);
+        .profile-card.expanded {
+            height: 380px; /* Expanded */
+        }
+
+        /* Visible Header */
+        .card-header {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            height: 50px;
         }
 
         #user-photo {
-            width: 100px;
-            height: 100px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
-            margin-bottom: 15px;
-            border: 3px solid var(--button-color);
-            background: #eee;
+            margin-right: 15px;
+            border: 2px solid var(--button-color);
         }
 
-        .name { font-size: 1.4rem; font-weight: 800; margin: 5px 0; }
-        .username { color: var(--link-color); font-weight: 500; margin-bottom: 20px; }
-        
+        .header-text { flex-grow: 1; }
+        .name { font-weight: bold; font-size: 1.1rem; }
+        .tap-hint { font-size: 0.75rem; color: var(--hint-color); }
+
+        /* Folded Content */
+        .card-content {
+            padding: 0 20px 20px 20px;
+            opacity: 0;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .expanded .card-content { opacity: 1; }
+
         .info-box {
             background: var(--bg-color);
+            width: 100%;
+            padding: 15px;
             border-radius: 15px;
-            padding: 12px;
-            margin-bottom: 20px;
+            margin-top: 10px;
         }
 
-        .info-bit { color: var(--hint-color); font-size: 0.85rem; margin: 4px 0; }
-        .id-val { color: var(--text-color); font-family: monospace; font-weight: bold; }
+        /* Stats Section */
+        .stats-row {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin: 15px 0;
+        }
+
+        .stat-item { text-align: center; }
+        .stat-val { font-weight: 800; color: var(--button-color); font-size: 1.2rem; }
+        .stat-lab { font-size: 0.7rem; color: var(--hint-color); text-transform: uppercase; }
 
         .share-btn {
             background-color: var(--button-color);
@@ -80,70 +102,89 @@
             width: 100%;
             padding: 14px;
             border-radius: 12px;
-            font-size: 1rem;
             font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            font-size: 1rem;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
 
-    <div class="profile-card">
-        <img id="user-photo" src="https://ui-avatars.com/api/?name=?" alt="User">
-        <div id="user-name" class="name">Loading...</div>
-        <div id="user-handle" class="username">@...</div>
-        
-        <div class="info-box">
-            <div class="info-bit">Telegram ID</div>
-            <div id="user-id" class="id-val">--------</div>
-            <div id="premium-tag" style="margin-top: 8px; font-size: 0.75rem;"></div>
+    <div class="profile-card" id="mainCard">
+        <div class="card-header">
+            <img id="user-photo" src="https://ui-avatars.com/api/?name=?" alt="User">
+            <div class="header-text">
+                <div id="user-name" class="name">User Name</div>
+                <div class="tap-hint">Tap to expand profile</div>
+            </div>
+            <div id="arrow">▼</div>
         </div>
 
-        <button class="share-btn" id="share-btn">INVITE FRIENDS</button>
+        <div class="card-content">
+            <div class="info-box">
+                <div style="font-size: 0.8rem; color: var(--hint-color);">Telegram Username</div>
+                <div id="user-handle" style="font-weight: bold;">@...</div>
+                <div style="font-size: 0.8rem; color: var(--hint-color); margin-top: 10px;">User ID</div>
+                <div id="user-id" style="font-family: monospace;">00000000</div>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-item">
+                    <div class="stat-val" id="share-count">0</div>
+                    <div class="stat-lab">Shares</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-val">Rank</div>
+                    <div id="user-rank" class="stat-lab" style="color: var(--button-color);">Explorer</div>
+                </div>
+            </div>
+
+            <button class="share-btn" id="shareBtn">SHARE PROFILE LINK</button>
+        </div>
     </div>
 
     <script>
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
 
-    // 1. Load User Data
-    const user = tg.initDataUnsafe?.user;
-    if (user) {
-        document.getElementById('user-name').innerText = `${user.first_name} ${user.last_name || ''}`;
-        document.getElementById('user-handle').innerText = user.username ? `@${user.username}` : 'Private Profile';
-        document.getElementById('user-id').innerText = user.id;
-        
-        if (user.photo_url) {
-            document.getElementById('user-photo').src = user.photo_url;
-        } else {
-            document.getElementById('user-photo').src = `https://ui-avatars.com/api/?name=${user.first_name}&background=random`;
+        // 1. Handle Expand/Collapse
+        const card = document.getElementById('mainCard');
+        card.addEventListener('click', (e) => {
+            if (e.target.id === 'shareBtn') return;
+            card.classList.toggle('expanded');
+            tg.HapticFeedback.selectionChanged();
+        });
+
+        // 2. Load User Data
+        const user = tg.initDataUnsafe?.user;
+        if (user) {
+            document.getElementById('user-name').innerText = user.first_name;
+            document.getElementById('user-handle').innerText = user.username ? `@${user.username}` : 'Private';
+            document.getElementById('user-id').innerText = user.id;
+            document.getElementById('user-photo').src = user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=random`;
         }
-    }
 
-    // 2. The Invite/Share Logic
-    const shareBtn = document.getElementById('share-btn');
-    shareBtn.addEventListener('click', () => {
-        tg.HapticFeedback.impactOccurred('medium');
+        // 3. Stats Logic
+        let shares = localStorage.getItem('nexus_shares') || 0;
+        document.getElementById('share-count').innerText = shares;
 
-        // Your direct web app link
-        const appUrl = "https://t.me/test6896_bot/nexus_hub";
-        const shareText = `Join me on Nexus Hub! 🚀\n${appUrl}`;
+        // 4. Global Share Logic
+        document.getElementById('shareBtn').addEventListener('click', () => {
+            tg.HapticFeedback.impactOccurred('heavy');
+            
+            // Update Stats
+            shares++;
+            localStorage.setItem('nexus_shares', shares);
+            document.getElementById('share-count').innerText = shares;
 
-        // Method A: Opens chat picker and pastes the text + link
-        tg.switchInlineQuery(shareText);
+            // The link that everyone will see
+            const appUrl = "https://t.me/test6896_bot/nexus_hub";
+            const shareText = "Check out my profile on Nexus Hub! 🚀";
 
-        // Method B: Fallback for older versions (Direct Share Link)
-        setTimeout(() => {
-            if (document.visibilityState === 'visible') {
-                const fallback = `https://t.me/share/url?url=${encodeURIComponent(appUrl)}&text=${encodeURIComponent("Join me on Nexus Hub! 🚀")}`;
-                tg.openTelegramLink(fallback);
-            }
-        }, 1000);
-    });
-</script>
-
+            // This opens the native Telegram share menu for ALL contacts
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(appUrl)}&text=${encodeURIComponent(shareText)}`);
+        });
+    </script>
 </body>
 </html>
-
