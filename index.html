@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexus Tiranga Pro</title>
+    <title>Nexus Tiranga Game</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --bg-color: #050505;
-            --card-bg: #111111;
             --saffron: #FF9933;
             --white: #FFFFFF;
             --green: #138808;
@@ -22,85 +21,99 @@
             margin: 0;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
             height: 100vh;
             overflow: hidden;
+            touch-action: none; /* Prevents scrolling while playing */
         }
 
-        /* Background Petals */
-        .petal { position: absolute; top: -10%; border-radius: 0 50% 0 50%; opacity: 0.6; pointer-events: none; animation: fall linear infinite; }
-        @keyframes fall { 0% { transform: translateY(0) rotate(0deg); opacity: 0; } 100% { transform: translateY(110vh) rotate(360deg); opacity: 0; } }
-
-        /* Neon Card */
+        /* --- UI Elements --- */
         .neon-card {
             position: relative;
-            width: 320px;
+            width: 300px;
             padding: 30px 20px;
-            background: var(--card-bg);
+            background: #111;
             border-radius: 24px;
             text-align: center;
+            margin-top: 50px;
             z-index: 10;
+            border: 1px solid var(--saffron);
         }
 
-        .neon-card::before {
-            content: ''; position: absolute; top: -3px; left: -3px; right: -3px; bottom: -3px;
-            background: linear-gradient(45deg, var(--saffron), var(--white), var(--green), var(--saffron));
-            background-size: 400%; z-index: -1; border-radius: 27px; animation: flag-flow 8s linear infinite; filter: blur(12px);
+        .btn {
+            background: linear-gradient(90deg, var(--saffron), var(--white), var(--green));
+            color: black;
+            border: none;
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 900;
+            cursor: pointer;
+            margin-top: 10px;
         }
 
-        @keyframes flag-flow { 0% { background-position: 0% 50%; } 100% { background-position: 400% 50%; } }
+        /* --- Game Canvas Area --- */
+        #game-container {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, #111, #000);
+        }
 
-        /* Clock Style */
-        .clock { font-size: 0.9rem; color: var(--saffron); font-weight: bold; margin-bottom: 15px; letter-spacing: 2px; }
+        #game-score {
+            position: absolute;
+            top: 40px; width: 100%;
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--white);
+            text-shadow: 0 0 10px var(--blue);
+        }
 
-        /* Ashoka Chakra & Photo */
-        .chakra-container { position: relative; width: 100px; height: 100px; margin: 0 auto 15px; display: flex; justify-content: center; align-items: center; }
-        .ashoka-chakra { position: absolute; width: 100px; height: 100px; border: 1px solid var(--blue); border-radius: 50%; animation: spin 15s linear infinite; opacity: 0.4; }
-        .ashoka-chakra::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: repeating-conic-gradient(transparent 0deg 14deg, var(--blue) 14deg 15deg); border-radius: 50%; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        #user-photo { width: 75px; height: 75px; border-radius: 50%; border: 2px solid white; z-index: 2; object-fit: cover; }
+        #player {
+            position: absolute;
+            bottom: 50px;
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            border: 3px solid var(--white);
+            box-shadow: 0 0 15px var(--blue);
+            transform: translateX(-50%);
+            transition: left 0.1s linear;
+        }
 
-        /* Progress Bar */
-        .progress-container { width: 100%; background: #222; height: 6px; border-radius: 10px; margin: 20px 0; overflow: hidden; }
-        .progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, var(--saffron), var(--green)); transition: width 0.5s; }
+        .star {
+            position: absolute;
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            animation: fall linear forwards;
+        }
 
-        /* Action Buttons */
-        .btn-row { display: flex; gap: 10px; margin-top: 15px; }
-        .secondary-btn { flex: 1; background: #222; color: white; border: 1px solid #444; padding: 10px; border-radius: 10px; font-size: 0.8rem; cursor: pointer; }
-        .start-btn { background: linear-gradient(90deg, var(--saffron), var(--white), var(--green)); color: black; border: none; width: 100%; padding: 14px; border-radius: 12px; font-weight: 900; cursor: pointer; margin-top: 10px; }
+        @keyframes fall {
+            to { transform: translateY(100vh); }
+        }
 
-        #toast { visibility: hidden; min-width: 200px; background: white; color: var(--blue); padding: 12px; position: fixed; bottom: 30px; border-radius: 50px; font-weight: bold; z-index: 100; }
-        #toast.show { visibility: visible; animation: slideUp 0.5s; }
-        @keyframes slideUp { from { bottom: -50px; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+        .exit-game {
+            position: absolute;
+            top: 20px; left: 20px;
+            background: rgba(255,255,255,0.2);
+            border: none; color: white; padding: 5px 15px; border-radius: 20px;
+        }
     </style>
 </head>
 <body>
 
-    <div id="petal-container"></div>
-    <div id="toast">JAI HIND! 🇮🇳</div>
+    <div class="neon-card" id="main-ui">
+        <h2 style="color: var(--saffron);">NEXUS HUB</h2>
+        <img id="user-photo-main" src="https://ui-avatars.com/api/?name=?" style="width: 80px; border-radius: 50%; border: 2px solid white;">
+        <p id="user-name">CITIZEN</p>
+        <button class="btn" id="play-btn">🕹️ PLAY TIRANGA CATCH</button>
+        <button class="btn" id="startBtn" style="opacity: 0.8;">START SESSION</button>
+    </div>
 
-    <div class="neon-card">
-        <div class="clock" id="live-clock">00:00:00 AM</div>
-
-        <div class="chakra-container">
-            <div class="ashoka-chakra"></div>
-            <img id="user-photo" src="https://ui-avatars.com/api/?name=?" alt="User">
-        </div>
-        
-        <div id="user-name" style="font-weight: 900; font-size: 1.4rem;">GUEST</div>
-        <div style="font-size: 0.7rem; color: #888;">CITIZEN ID: <span id="user-id-val">00000000</span></div>
-
-        <div class="progress-container">
-            <div class="progress-bar" id="p-bar"></div>
-        </div>
-
-        <div class="btn-row">
-            <button class="secondary-btn" onclick="openLink('https://t.me/your_channel')">CHANNEL</button>
-            <button class="secondary-btn" onclick="openLink('https://t.me/your_admin')">SUPPORT</button>
-        </div>
-        
-        <button class="start-btn" id="startBtn">START NATIONAL SESSION</button>
+    <div id="game-container">
+        <button class="exit-game" onclick="stopGame()">✕ EXIT</button>
+        <div id="game-score">0</div>
+        <img id="player" src="https://ui-avatars.com/api/?name=?" alt="Player">
     </div>
 
     <script>
@@ -108,52 +121,97 @@
         tg.ready();
         tg.expand();
 
-        // Clock Logic
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('live-clock').innerText = now.toLocaleTimeString();
-        }
-        setInterval(updateClock, 1000);
+        const mainUI = document.getElementById('main-ui');
+        const gameContainer = document.getElementById('game-container');
+        const player = document.getElementById('player');
+        const scoreDisplay = document.getElementById('game-score');
+        
+        let score = 0;
+        let gameActive = false;
+        let gameLoop;
 
-        // Petal Generation
-        function createPetal() {
-            const petal = document.createElement('div');
-            petal.className = 'petal';
-            const colors = ['#FF9933', '#138808'];
-            petal.style.width = '12px'; petal.style.height = '12px';
-            petal.style.left = Math.random() * 100 + 'vw';
-            petal.style.backgroundColor = colors[Math.floor(Math.random() * 2)];
-            petal.style.animationDuration = Math.random() * 3 + 4 + 's';
-            document.getElementById('petal-container').appendChild(petal);
-            setTimeout(() => petal.remove(), 6000);
-        }
-        setInterval(createPetal, 400);
-
-        // Progress Bar Animation on Load
-        setTimeout(() => { document.getElementById('p-bar').style.width = '100%'; }, 500);
-
-        // User Data
+        // Sync User Data
         const user = tg.initDataUnsafe?.user;
         if (user) {
+            const photo = user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=FF9933&color=fff`;
+            document.getElementById('user-photo-main').src = photo;
+            player.src = photo;
             document.getElementById('user-name').innerText = user.first_name.toUpperCase();
-            document.getElementById('user-id-val').innerText = user.id;
-            document.getElementById('user-photo').src = user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=FF9933&color=fff`;
         }
 
-        function openLink(url) {
-            tg.openTelegramLink(url);
-            tg.HapticFeedback.impactOccurred('light');
+        // --- Game Logic ---
+        document.getElementById('play-btn').addEventListener('click', () => {
+            mainUI.style.display = 'none';
+            gameContainer.style.display = 'block';
+            startGame();
+        });
+
+        function startGame() {
+            score = 0;
+            scoreDisplay.innerText = score;
+            gameActive = true;
+            tg.HapticFeedback.impactOccurred('medium');
+            
+            gameLoop = setInterval(spawnStar, 600);
+            
+            window.addEventListener('touchmove', (e) => {
+                if (!gameActive) return;
+                let touchX = e.touches[0].clientX;
+                player.style.left = touchX + 'px';
+            });
         }
 
+        function spawnStar() {
+            if (!gameActive) return;
+            const star = document.createElement('div');
+            star.className = 'star';
+            const colors = ['#FF9933', '#FFFFFF', '#138808'];
+            star.style.backgroundColor = colors[Math.floor(Math.random() * 3)];
+            star.style.left = Math.random() * (window.innerWidth - 20) + 'px';
+            star.style.top = '-20px';
+            
+            const speed = Math.random() * 2 + 2;
+            star.style.animationDuration = speed + 's';
+            
+            gameContainer.appendChild(star);
+
+            // Collision Detection
+            const checkCollision = setInterval(() => {
+                const pRect = player.getBoundingClientRect();
+                const sRect = star.getBoundingClientRect();
+
+                if (sRect.bottom >= pRect.top && 
+                    sRect.left >= pRect.left && 
+                    sRect.right <= pRect.right && 
+                    sRect.top <= pRect.bottom) {
+                    
+                    score++;
+                    scoreDisplay.innerText = score;
+                    tg.HapticFeedback.impactOccurred('light');
+                    star.remove();
+                    clearInterval(checkCollision);
+                }
+            }, 50);
+
+            setTimeout(() => { 
+                star.remove(); 
+                clearInterval(checkCollision); 
+            }, speed * 1000);
+        }
+
+        function stopGame() {
+            gameActive = false;
+            clearInterval(gameLoop);
+            gameContainer.style.display = 'none';
+            mainUI.style.display = 'block';
+            tg.showConfirm(`Game Over! Score: ${score}. Return to menu?`);
+        }
+
+        // Start Session Logic
         document.getElementById('startBtn').addEventListener('click', () => {
-            tg.HapticFeedback.notificationOccurred('success');
-            document.getElementById('toast').className = "show";
-            setTimeout(() => {
-                tg.sendData(`Session: ${user?.first_name || 'Guest'}`);
-                tg.close();
-            }, 1200);
+            tg.sendData(`Session started. Final Highscore: ${score}`);
+            tg.close();
         });
     </script>
 </body>
 </html>
-
