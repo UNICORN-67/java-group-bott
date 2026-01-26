@@ -3,140 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexus Neon Pro</title>
+    <title>Nexus Tiranga Final</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
             --bg-color: #050505;
             --card-bg: #111111;
-            --neon-cyan: #00f2ff;
-            --neon-pink: #ff007f;
-            --text-color: #ffffff;
+            --saffron: #FF9933;
+            --white: #FFFFFF;
+            --green: #138808;
+            --blue: #000080;
         }
 
         body {
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Segoe UI', sans-serif;
             background-color: var(--bg-color);
-            color: var(--text-color);
+            color: white;
             margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             overflow: hidden;
+            position: relative;
         }
 
-        /* Animated Neon Border Card */
+        /* --- Falling Petals Animation --- */
+        .petal {
+            position: absolute;
+            top: -10%;
+            border-radius: 0 50% 0 50%;
+            opacity: 0.7;
+            pointer-events: none;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.7; }
+            90% { opacity: 0.7; }
+            100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* --- Main Card Styles --- */
         .neon-card {
             position: relative;
             width: 300px;
             padding: 40px 20px;
             background: var(--card-bg);
-            border-radius: 20px;
+            border-radius: 24px;
             text-align: center;
-            z-index: 1;
+            z-index: 10; /* Above petals */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         .neon-card::before {
             content: '';
             position: absolute;
-            top: -2px; left: -2px; right: -2px; bottom: -2px;
-            background: linear-gradient(45deg, var(--neon-cyan), var(--neon-pink), var(--neon-cyan));
-            background-size: 200%;
+            top: -3px; left: -3px; right: -3px; bottom: -3px;
+            background: linear-gradient(45deg, var(--saffron), var(--white), var(--green), var(--saffron));
+            background-size: 400%;
             z-index: -1;
-            border-radius: 22px;
-            animation: flow 4s linear infinite;
-            filter: blur(10px);
-            opacity: 0.8;
+            border-radius: 27px;
+            animation: flag-flow 8s linear infinite;
+            filter: blur(12px);
         }
 
-        @keyframes flow {
+        @keyframes flag-flow {
             0% { background-position: 0% 50%; }
-            100% { background-position: 200% 50%; }
+            100% { background-position: 400% 50%; }
         }
+
+        /* Ashoka Chakra Behind Photo */
+        .chakra-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .ashoka-chakra {
+            position: absolute;
+            width: 110px;
+            height: 110px;
+            border: 2px solid var(--blue);
+            border-radius: 50%;
+            animation: spin 12s linear infinite;
+            opacity: 0.5;
+        }
+
+        .ashoka-chakra::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-conic-gradient(transparent 0deg 14deg, var(--blue) 14deg 15deg);
+            border-radius: 50%;
+        }
+
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
         #user-photo {
-            width: 90px;
-            height: 90px;
+            width: 85px; height: 85px;
             border-radius: 50%;
-            border: 2px solid var(--neon-cyan);
-            box-shadow: 0 0 15px var(--neon-cyan);
-            margin-bottom: 20px;
+            border: 3px solid var(--white);
+            z-index: 2;
+            object-fit: cover;
         }
 
-        .glitch-name {
+        .user-name {
             font-size: 1.6rem;
-            font-weight: bold;
+            font-weight: 900;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            color: white;
-            position: relative;
             margin-bottom: 5px;
-            text-shadow: 0 0 8px var(--neon-cyan);
-            animation: glitch 3s infinite;
-        }
-
-        @keyframes glitch {
-            0% { transform: translate(0); }
-            1% { transform: translate(-3px, 1px); }
-            2% { transform: translate(3px, -1px); }
-            3% { transform: translate(0); }
+            text-shadow: 0 0 10px rgba(255,255,255,0.3);
         }
 
         .start-btn {
-            background: var(--neon-cyan);
+            background: linear-gradient(90deg, var(--saffron), var(--white), var(--green));
             color: #000;
             border: none;
             width: 100%;
-            padding: 15px;
-            border-radius: 12px;
-            font-weight: bold;
-            font-size: 1rem;
+            padding: 16px;
+            border-radius: 14px;
+            font-weight: 900;
+            font-size: 1.1rem;
             cursor: pointer;
-            box-shadow: 0 0 15px var(--neon-cyan);
-            transition: all 0.2s;
+            margin-top: 15px;
+            transition: 0.2s;
         }
 
-        .start-btn:active {
-            transform: scale(0.96);
-            opacity: 0.8;
-        }
+        .start-btn:active { transform: scale(0.95); }
 
-        /* Toast Message Styling */
         #toast {
             visibility: hidden;
-            min-width: 200px;
-            background-color: var(--neon-cyan);
-            color: #000;
+            min-width: 220px;
+            background-color: var(--white);
+            color: var(--blue);
             text-align: center;
             border-radius: 50px;
-            padding: 10px;
+            padding: 14px;
             position: fixed;
-            z-index: 1000;
-            bottom: 30px;
-            font-weight: bold;
-            box-shadow: 0 0 20px var(--neon-cyan);
+            bottom: 40px;
+            font-weight: 900;
+            z-index: 100;
         }
 
-        #toast.show {
-            visibility: visible;
-            animation: fadein 0.5s;
-        }
+        #toast.show { visibility: visible; animation: slideUp 0.5s ease-out; }
 
-        @keyframes fadein {
-            from {bottom: 0; opacity: 0;}
-            to {bottom: 30px; opacity: 1;}
-        }
+        @keyframes slideUp { from { bottom: -50px; opacity: 0; } to { bottom: 40px; opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <div id="toast">THANK YOU! 🚀</div>
+    <div id="petal-container"></div>
+
+    <div id="toast">JAI HIND! 🇮🇳</div>
 
     <div class="neon-card">
-        <img id="user-photo" src="https://ui-avatars.com/api/?name=?" alt="Avatar">
-        <div id="user-name" class="glitch-name">LOADING...</div>
-        <div style="font-size: 0.8rem; color: #666; margin-bottom: 30px;">ID: <span id="user-id-val">00000000</span></div>
+        <div class="chakra-container">
+            <div class="ashoka-chakra"></div>
+            <img id="user-photo" src="https://ui-avatars.com/api/?name=?" alt="User">
+        </div>
+        
+        <div id="user-name" class="user-name">GUEST</div>
+        <div style="font-size: 0.8rem; color: #777; margin-bottom: 25px;">ID: <span id="user-id-val">00000000</span></div>
         
         <button class="start-btn" id="startBtn">START SESSION</button>
     </div>
@@ -146,30 +179,44 @@
         tg.ready();
         tg.expand();
 
+        // 1. Generate Falling Petals
+        const petalContainer = document.getElementById('petal-container');
+        const colors = ['#FF9933', '#138808']; // Saffron and Green
+
+        function createPetal() {
+            const petal = document.createElement('div');
+            petal.className = 'petal';
+            const size = Math.random() * 10 + 10 + 'px';
+            petal.style.width = size;
+            petal.style.height = size;
+            petal.style.left = Math.random() * 100 + 'vw';
+            petal.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            petal.style.animationDuration = Math.random() * 3 + 4 + 's';
+            petalContainer.appendChild(petal);
+
+            setTimeout(() => { petal.remove(); }, 7000);
+        }
+
+        setInterval(createPetal, 300);
+
+        // 2. User Data
         const user = tg.initDataUnsafe?.user;
         if (user) {
             document.getElementById('user-name').innerText = user.first_name.toUpperCase();
             document.getElementById('user-id-val').innerText = user.id;
-            document.getElementById('user-photo').src = user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=000&color=0ff`;
+            document.getElementById('user-photo').src = user.photo_url || 
+                `https://ui-avatars.com/api/?name=${user.first_name}&background=FF9933&color=fff`;
         }
 
-        const startBtn = document.getElementById('startBtn');
-        const toast = document.getElementById('toast');
-
-        startBtn.addEventListener('click', () => {
-            // 1. Vibrate phone
+        // 3. Start Button
+        document.getElementById('startBtn').addEventListener('click', () => {
             tg.HapticFeedback.notificationOccurred('success');
-
-            // 2. Show the "Thank You" message
-            toast.className = "show";
-            startBtn.innerText = "SUCCESS";
-            startBtn.style.backgroundColor = "#00ff88"; // Change button to green
-
-            // 3. Send data and close after a short delay
+            document.getElementById('toast').className = "show";
+            
             setTimeout(() => {
-                tg.sendData(`Session initiated by ${user?.first_name || 'User'}`);
+                tg.sendData(`Tiranga Hub Active: ${user?.first_name || 'User'}`);
                 tg.close();
-            }, 1000); // 1 second delay so they see the toast
+            }, 1200);
         });
     </script>
 </body>
