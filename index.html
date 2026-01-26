@@ -55,7 +55,6 @@
             100% { background-position: 200% 50%; }
         }
 
-        /* Profile Elements */
         #user-photo {
             width: 90px;
             height: 90px;
@@ -65,7 +64,6 @@
             margin-bottom: 20px;
         }
 
-        /* Glitch Name Effect */
         .glitch-name {
             font-size: 1.6rem;
             font-weight: bold;
@@ -85,13 +83,6 @@
             3% { transform: translate(0); }
         }
 
-        .user-id {
-            font-size: 0.8rem;
-            color: #666;
-            margin-bottom: 30px;
-        }
-
-        /* Simple Start Button */
         .start-btn {
             background: var(--neon-cyan);
             color: #000;
@@ -103,59 +94,82 @@
             font-size: 1rem;
             cursor: pointer;
             box-shadow: 0 0 15px var(--neon-cyan);
-            transition: transform 0.1s, box-shadow 0.2s;
+            transition: all 0.2s;
         }
 
         .start-btn:active {
             transform: scale(0.96);
-            box-shadow: 0 0 5px var(--neon-cyan);
+            opacity: 0.8;
+        }
+
+        /* Toast Message Styling */
+        #toast {
+            visibility: hidden;
+            min-width: 200px;
+            background-color: var(--neon-cyan);
+            color: #000;
+            text-align: center;
+            border-radius: 50px;
+            padding: 10px;
+            position: fixed;
+            z-index: 1000;
+            bottom: 30px;
+            font-weight: bold;
+            box-shadow: 0 0 20px var(--neon-cyan);
+        }
+
+        #toast.show {
+            visibility: visible;
+            animation: fadein 0.5s;
+        }
+
+        @keyframes fadein {
+            from {bottom: 0; opacity: 0;}
+            to {bottom: 30px; opacity: 1;}
         }
     </style>
 </head>
 <body>
 
+    <div id="toast">THANK YOU! 🚀</div>
+
     <div class="neon-card">
         <img id="user-photo" src="https://ui-avatars.com/api/?name=?" alt="Avatar">
         <div id="user-name" class="glitch-name">LOADING...</div>
-        <div class="user-id">ID: <span id="user-id-val">00000000</span></div>
+        <div style="font-size: 0.8rem; color: #666; margin-bottom: 30px;">ID: <span id="user-id-val">00000000</span></div>
         
         <button class="start-btn" id="startBtn">START SESSION</button>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        
-        // Initialize App
         tg.ready();
         tg.expand();
 
-        // Populate User Data
         const user = tg.initDataUnsafe?.user;
         if (user) {
             document.getElementById('user-name').innerText = user.first_name.toUpperCase();
             document.getElementById('user-id-val').innerText = user.id;
-            
-            if (user.photo_url) {
-                document.getElementById('user-photo').src = user.photo_url;
-            } else {
-                document.getElementById('user-photo').src = `https://ui-avatars.com/api/?name=${user.first_name}&background=000&color=0ff`;
-            }
+            document.getElementById('user-photo').src = user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=000&color=0ff`;
         }
 
-        // Handle Start Button Click
         const startBtn = document.getElementById('startBtn');
+        const toast = document.getElementById('toast');
+
         startBtn.addEventListener('click', () => {
-            // Success Haptic Feedback
+            // 1. Vibrate phone
             tg.HapticFeedback.notificationOccurred('success');
-            
-            // Simple data message to the bot
-            const message = `User ${user?.first_name || 'Guest'} initiated the session.`;
-            tg.sendData(message);
-            
-            // Optional: Show a native Telegram popup before closing
-            tg.showConfirm("Connection Established. Return to chat?", (confirmed) => {
-                if (confirmed) tg.close();
-            });
+
+            // 2. Show the "Thank You" message
+            toast.className = "show";
+            startBtn.innerText = "SUCCESS";
+            startBtn.style.backgroundColor = "#00ff88"; // Change button to green
+
+            // 3. Send data and close after a short delay
+            setTimeout(() => {
+                tg.sendData(`Session initiated by ${user?.first_name || 'User'}`);
+                tg.close();
+            }, 1000); // 1 second delay so they see the toast
         });
     </script>
 </body>
