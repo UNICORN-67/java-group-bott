@@ -23,78 +23,64 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding-top: 30px;
+            padding-top: 50px;
+            overflow: hidden; /* Prevent scrolling during animation */
         }
 
-        /* Foldable Card Container */
+        /* --- Welcome Animation Styles --- */
+        #splash-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s;
+        }
+
+        .pulse-logo {
+            width: 80px;
+            height: 80px;
+            background: var(--button-color);
+            border-radius: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            font-size: 2rem;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(51, 144, 236, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(51, 144, 236, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(51, 144, 236, 0); }
+        }
+
+        /* --- Profile Card Styles --- */
         .profile-card {
             background: var(--sec-bg);
             width: 90%;
             max-width: 360px;
-            border-radius: 20px;
+            border-radius: 24px;
             overflow: hidden;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            height: 80px; /* Folded */
+            height: 80px;
         }
+        .profile-card.expanded { height: 320px; }
 
-        .profile-card.expanded {
-            height: 380px; /* Expanded */
-        }
-
-        /* Visible Header */
-        .card-header {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            height: 50px;
-        }
-
-        #user-photo {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            margin-right: 15px;
-            border: 2px solid var(--button-color);
-        }
-
-        .header-text { flex-grow: 1; }
-        .name { font-weight: bold; font-size: 1.1rem; }
-        .tap-hint { font-size: 0.75rem; color: var(--hint-color); }
-
-        /* Folded Content */
-        .card-content {
-            padding: 0 20px 20px 20px;
-            opacity: 0;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
+        .card-header { display: flex; align-items: center; padding: 15px; height: 50px; }
+        #user-photo { width: 50px; height: 50px; border-radius: 50%; margin-right: 15px; border: 2px solid var(--button-color); }
+        
+        .card-content { padding: 0 20px 20px; opacity: 0; display: flex; flex-direction: column; align-items: center; transition: opacity 0.3s; }
         .expanded .card-content { opacity: 1; }
 
-        .info-box {
-            background: var(--bg-color);
-            width: 100%;
-            padding: 15px;
-            border-radius: 15px;
-            margin-top: 10px;
-        }
-
-        /* Stats Section */
-        .stats-row {
-            display: flex;
-            justify-content: space-around;
-            width: 100%;
-            margin: 15px 0;
-        }
-
-        .stat-item { text-align: center; }
-        .stat-val { font-weight: 800; color: var(--button-color); font-size: 1.2rem; }
-        .stat-lab { font-size: 0.7rem; color: var(--hint-color); text-transform: uppercase; }
-
+        .info-box { background: var(--bg-color); border-radius: 15px; padding: 15px; margin-top: 10px; width: 100%; text-align: center; }
+        
         .share-btn {
             background-color: var(--button-color);
             color: var(--button-text);
@@ -103,43 +89,33 @@
             padding: 14px;
             border-radius: 12px;
             font-weight: bold;
-            font-size: 1rem;
-            margin-top: 10px;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
 
+    <div id="splash-screen">
+        <div class="pulse-logo">N</div>
+        <p style="margin-top: 20px; font-weight: 500; color: var(--hint-color);">Nexus Hub Loading...</p>
+    </div>
+
     <div class="profile-card" id="mainCard">
         <div class="card-header">
             <img id="user-photo" src="https://ui-avatars.com/api/?name=?" alt="User">
-            <div class="header-text">
-                <div id="user-name" class="name">User Name</div>
-                <div class="tap-hint">Tap to expand profile</div>
+            <div style="flex-grow:1;">
+                <div id="user-name" style="font-weight:bold;">Nexus Profile</div>
+                <div style="font-size:0.75rem; color:var(--hint-color);">Tap to expand</div>
             </div>
-            <div id="arrow">▼</div>
+            <span>▼</span>
         </div>
 
         <div class="card-content">
             <div class="info-box">
-                <div style="font-size: 0.8rem; color: var(--hint-color);">Telegram Username</div>
-                <div id="user-handle" style="font-weight: bold;">@...</div>
-                <div style="font-size: 0.8rem; color: var(--hint-color); margin-top: 10px;">User ID</div>
-                <div id="user-id" style="font-family: monospace;">00000000</div>
+                <div id="user-handle" style="font-weight:bold;">@username</div>
+                <div id="user-id" style="font-size:0.8rem; color:var(--hint-color);">ID: 000000</div>
             </div>
-
-            <div class="stats-row">
-                <div class="stat-item">
-                    <div class="stat-val" id="share-count">0</div>
-                    <div class="stat-lab">Shares</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-val">Rank</div>
-                    <div id="user-rank" class="stat-lab" style="color: var(--button-color);">Explorer</div>
-                </div>
-            </div>
-
-            <button class="share-btn" id="shareBtn">SHARE PROFILE LINK</button>
+            <button class="share-btn" id="shareBtn">SHARE APP LINK</button>
         </div>
     </div>
 
@@ -148,7 +124,19 @@
         tg.ready();
         tg.expand();
 
-        // 1. Handle Expand/Collapse
+        // 1. Hide Splash Screen after 1.5 seconds
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                splash.style.opacity = '0';
+                setTimeout(() => {
+                    splash.style.visibility = 'hidden';
+                    document.body.style.overflow = 'auto';
+                }, 500);
+            }, 1500);
+        });
+
+        // 2. Expand/Collapse Card
         const card = document.getElementById('mainCard');
         card.addEventListener('click', (e) => {
             if (e.target.id === 'shareBtn') return;
@@ -156,35 +144,22 @@
             tg.HapticFeedback.selectionChanged();
         });
 
-        // 2. Load User Data
+        // 3. Populate Data
         const user = tg.initDataUnsafe?.user;
         if (user) {
             document.getElementById('user-name').innerText = user.first_name;
-            document.getElementById('user-handle').innerText = user.username ? `@${user.username}` : 'Private';
-            document.getElementById('user-id').innerText = user.id;
-            document.getElementById('user-photo').src = user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=random`;
+            document.getElementById('user-handle').innerText = `@${user.username || 'unknown'}`;
+            document.getElementById('user-id').innerText = `ID: ${user.id}`;
+            document.getElementById('user-photo').src = user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}`;
         }
 
-        // 3. Stats Logic
-        let shares = localStorage.getItem('nexus_shares') || 0;
-        document.getElementById('share-count').innerText = shares;
-
-        // 4. Global Share Logic
+        // 4. Share Logic
         document.getElementById('shareBtn').addEventListener('click', () => {
-            tg.HapticFeedback.impactOccurred('heavy');
-            
-            // Update Stats
-            shares++;
-            localStorage.setItem('nexus_shares', shares);
-            document.getElementById('share-count').innerText = shares;
-
-            // The link that everyone will see
+            tg.HapticFeedback.impactOccurred('medium');
             const appUrl = "https://t.me/test6896_bot/nexus_hub";
-            const shareText = "Check out my profile on Nexus Hub! 🚀";
-
-            // This opens the native Telegram share menu for ALL contacts
-            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(appUrl)}&text=${encodeURIComponent(shareText)}`);
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(appUrl)}&text=Check out my profile on Nexus Hub! 🚀`);
         });
     </script>
 </body>
 </html>
+
