@@ -104,55 +104,46 @@
     </div>
 
     <script>
-        const tg = window.Telegram.WebApp;
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+
+    // 1. Load User Data
+    const user = tg.initDataUnsafe?.user;
+    if (user) {
+        document.getElementById('user-name').innerText = `${user.first_name} ${user.last_name || ''}`;
+        document.getElementById('user-handle').innerText = user.username ? `@${user.username}` : 'Private Profile';
+        document.getElementById('user-id').innerText = user.id;
         
-        // Setup UI
-        tg.ready();
-        tg.expand();
-        tg.headerColor = 'secondary_bg_color';
-
-        // Set User Data
-        const user = tg.initDataUnsafe?.user;
-        if (user) {
-            document.getElementById('user-name').innerText = `${user.first_name} ${user.last_name || ''}`;
-            document.getElementById('user-handle').innerText = user.username ? `@${user.username}` : 'Private Profile';
-            document.getElementById('user-id').innerText = user.id;
-            
-            if (user.photo_url) {
-                document.getElementById('user-photo').src = user.photo_url;
-            } else {
-                document.getElementById('user-photo').src = `https://ui-avatars.com/api/?name=${user.first_name}&background=random`;
-            }
-
-            if (user.is_premium) {
-                document.getElementById('premium-tag').innerText = "⭐ PREMIUM MEMBER";
-                document.getElementById('premium-tag').style.color = "#f8d44c";
-            }
+        if (user.photo_url) {
+            document.getElementById('user-photo').src = user.photo_url;
+        } else {
+            document.getElementById('user-photo').src = `https://ui-avatars.com/api/?name=${user.first_name}&background=random`;
         }
+    }
 
-        // Logic for Share Button
-        const shareBtn = document.getElementById('share-btn');
-        shareBtn.addEventListener('click', () => {
-            // 1. Vibration
-            tg.HapticFeedback.impactOccurred('medium');
+    // 2. The Invite/Share Logic
+    const shareBtn = document.getElementById('share-btn');
+    shareBtn.addEventListener('click', () => {
+        tg.HapticFeedback.impactOccurred('medium');
 
-            // 2. Share via Inline Query
-            const shareMsg = "Join me on Nexus Hub! 🚀";
-            tg.switchInlineQuery(shareMsg);
+        // Your direct web app link
+        const appUrl = "https://t.me/test6896_bot/nexus_hub";
+        const shareText = `Join me on Nexus Hub! 🚀\n${appUrl}`;
 
-            // 3. Fallback: If inline fails, open direct share link
-            setTimeout(() => {
-                if (document.visibilityState === 'visible') {
-                    const fallbackUrl = `https://t.me/share/url?url=https://t.me/test6896_bot/nexus_hub&text=${encodeURIComponent(shareMsg)}`;
-                    tg.openTelegramLink(fallbackUrl);
-                }
-            }, 800);
-        });
+        // Method A: Opens chat picker and pastes the text + link
+        tg.switchInlineQuery(shareText);
 
-        // Set Bottom Main Button
-        tg.MainButton.setText("EXIT HUB");
-        tg.MainButton.hide(); // Keep hidden until needed, or use .show() if you want it always there
-    </script>
+        // Method B: Fallback for older versions (Direct Share Link)
+        setTimeout(() => {
+            if (document.visibilityState === 'visible') {
+                const fallback = `https://t.me/share/url?url=${encodeURIComponent(appUrl)}&text=${encodeURIComponent("Join me on Nexus Hub! 🚀")}`;
+                tg.openTelegramLink(fallback);
+            }
+        }, 1000);
+    });
+</script>
+
 </body>
 </html>
 
