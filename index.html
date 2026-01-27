@@ -9,48 +9,65 @@
 
     <style>
         :root { --bg: #000; --saffron: #FF9933; --white: #FFF; --green: #138808; }
-        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; padding: 0; overflow: hidden; }
-        #loader { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: white; margin: 0; padding: 0; }
+        
+        #loader { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; }
         .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top: 4px solid var(--saffron); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .screen { display: none; padding: 20px; flex-direction: column; align-items: center; min-height: 100vh; justify-content: center; }
+
+        .screen { display: none; padding: 20px; flex-direction: column; align-items: center; min-height: 100vh; text-align: center; box-sizing: border-box; }
         .active { display: flex; }
-        .btn { padding: 18px; width: 100%; max-width: 300px; border-radius: 15px; border: none; font-weight: bold; background: linear-gradient(90deg, var(--saffron), var(--white), var(--green)); color: #000; margin-top: 15px; cursor: pointer; font-size: 1rem; }
-        #debug-log { font-size: 12px; color: #ff4444; margin-top: 20px; text-align: center; width: 80%; }
+        
+        .btn { padding: 18px; width: 100%; max-width: 300px; border-radius: 12px; border: none; font-weight: bold; background: linear-gradient(90deg, var(--saffron), var(--white), var(--green)); color: #000; margin-top: 15px; cursor: pointer; text-transform: uppercase; }
+        .btn-sec { background: #222; color: #fff; border: 1px solid #444; }
+
+        .lb-card { background: #111; width: 100%; max-width: 350px; border-radius: 15px; padding: 10px; margin-top: 20px; border: 1px solid #333; }
+        .lb-row { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #222; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
     <div id="loader">
         <div class="spinner"></div>
-        <p id="status" style="margin-top: 20px; color: #888;">CONNECTING TO COMMAND...</p>
-        <div id="debug-log"></div>
+        <p id="status" style="margin-top: 20px; color: #888;">SYNCING WITH COMMAND...</p>
     </div>
 
     <div id="screen-select" class="screen">
-        <h1 style="color: var(--saffron); margin-bottom: 30px;">JOIN THE FORCE</h1>
+        <h1 style="color: var(--saffron);">JOIN THE FORCE</h1>
+        <p style="color: #666;">Choose your specialized unit</p>
         <button class="btn" onclick="register('ARMY')">JOIN ARMY</button>
         <button class="btn" onclick="register('NAVY')">JOIN NAVY</button>
         <button class="btn" onclick="register('AIR FORCE')">JOIN AIR FORCE</button>
     </div>
 
     <div id="screen-dash" class="screen">
-        <h2 id="u-name">OFFICER</h2>
-        <p id="u-unit" style="color: var(--saffron); font-weight: bold;"></p>
-        <div style="background: #111; padding: 30px; border-radius: 50%; border: 2px solid var(--green); margin: 20px 0;">
+        <h2 id="u-name" style="margin-bottom: 0;">OFFICER</h2>
+        <p id="u-unit" style="color: var(--saffron); font-weight: bold; margin-top: 5px;"></p>
+        
+        <div style="background: radial-gradient(circle, #1a1a1a, #000); padding: 40px; border-radius: 50%; border: 3px solid var(--green); margin: 30px 0; box-shadow: 0 0 20px rgba(19, 136, 8, 0.3);">
             <h1 id="u-missions" style="font-size: 4rem; margin: 0;">0</h1>
+            <small style="color: #666;">MISSIONS</small>
         </div>
+
         <button class="btn" onclick="updateMissions()">REPORT DUTY</button>
+        <button class="btn btn-sec" onclick="loadLeaderboard()">RANKINGS</button>
+    </div>
+
+    <div id="screen-leaderboard" class="screen">
+        <h2 style="color: var(--saffron);">TOP OFFICERS</h2>
+        <div id="leaderboard-list" class="lb-card">
+            </div>
+        <button class="btn btn-sec" onclick="show('screen-dash')">BACK</button>
     </div>
 
     <script>
-        const { Client, Databases } = Appwrite;
+        const { Client, Databases, Query } = Appwrite;
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
 
-        // --- APPWRITE CONFIG (APKE SCREENSHOT SE VERIFIED) ---
-const client = new Client()
+        // --- APWRITE CONFIG (APKE SCREENSHOT SE VERIFIED) ---
+        const client = new Client()
     .setEndpoint('https://fra.cloud.appwrite.io/v1')
     .setProject('697874190033c5037d47'); // Aapki Project ID
 
@@ -58,46 +75,64 @@ const databases = new Databases(client);
 const DB_ID = '6978749b001103ca1fdf';    // "Helloo" Database ID
 const COLL_ID = 'users';                 // Aapki "Userr" Collection ID
 // ---------------------------------------------------
-
-
         const USER_ID = tg.initDataUnsafe?.user?.id?.toString() || "tester_123";
         const USER_NAME = tg.initDataUnsafe?.user?.first_name || "OFFICER";
 
         async function init() {
             try {
-                // Try to get data from Appwrite
-                const response = await databases.getDocument(DB_ID, COLL_ID, USER_ID);
-                render(response);
+                const doc = await databases.getDocument(DB_ID, COLL_ID, USER_ID);
+                render(doc);
                 show('screen-dash');
             } catch (err) {
-                console.log("Error or User not found:", err.message);
-                // Agar user nahi hai toh selection dikhayein
-                if (err.code === 404 || err.message.includes('fetch')) {
-                    show('screen-select');
-                } else {
-                    document.getElementById('debug-log').innerText = "Connection Error: " + err.message;
-                }
+                console.log("New User Detected");
+                show('screen-select');
             } finally {
                 document.getElementById('loader').style.display = 'none';
             }
         }
 
         async function register(unit) {
-    try {
-        const data = { 
-            name: USER_NAME, // Dashboard mein 'name' hona chahiye
-            unit: unit,      // Dashboard mein 'unit' hona chahiye
-            missions: 0      // Dashboard mein 'missions' (integer) hona chahiye
-        };
-        
-        // Document create command
-        await databases.createDocument(DB_ID, COLL_ID, USER_ID, data);
-        location.reload();
-    } catch (e) {
-        alert("Attribute Error: " + e.message + "\nCheck if attributes are 'Available' in dashboard.");
-    }
-}
+            try {
+                const data = { name: USER_NAME, unit: unit, missions: 0 };
+                await databases.createDocument(DB_ID, COLL_ID, USER_ID, data);
+                location.reload();
+            } catch (e) {
+                alert("Error: " + e.message + "\nCheck if 'name', 'unit', 'missions' columns are created!");
+            }
+        }
 
+        async function updateMissions() {
+            const m = document.getElementById('u-missions');
+            const newCount = parseInt(m.innerText) + 1;
+            m.innerText = newCount; // Fast UI update
+            tg.HapticFeedback.impactOccurred('medium');
+
+            try {
+                await databases.updateDocument(DB_ID, COLL_ID, USER_ID, { missions: newCount });
+            } catch (e) { console.error("Cloud sync failed"); }
+        }
+
+        async function loadLeaderboard() {
+            show('loader'); // Temp loader
+            try {
+                const response = await databases.listDocuments(DB_ID, COLL_ID);
+                let users = response.documents;
+                users.sort((a, b) => b.missions - a.missions);
+
+                let html = "";
+                users.slice(0, 10).forEach((u, i) => {
+                    const icon = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i+1}`;
+                    html += `
+                        <div class="lb-row">
+                            <span>${icon} ${u.name}</span>
+                            <span style="color: var(--saffron); font-weight:bold;">${u.missions}</span>
+                        </div>`;
+                });
+                document.getElementById('leaderboard-list').innerHTML = html;
+                show('screen-leaderboard');
+            } catch (e) { alert("LB Error: " + e.message); }
+            finally { document.getElementById('loader').style.display = 'none'; }
+        }
 
         function render(d) {
             document.getElementById('u-name').innerText = d.name.toUpperCase();
@@ -107,7 +142,7 @@ const COLL_ID = 'users';                 // Aapki "Userr" Collection ID
 
         function show(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
+            if(id !== 'loader') document.getElementById(id).classList.add('active');
         }
 
         window.onload = init;
