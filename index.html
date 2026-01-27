@@ -3,70 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexus Tiranga</title>
+    <title>Nexus Tiranga: Battleground</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/appwrite@13.0.1"></script>
 
     <style>
-        :root { --bg: #000; --saffron: #FF9933; --white: #FFF; --green: #138808; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: white; margin: 0; padding: 0; }
+        :root { --bg: #000; --saffron: #FF9933; --white: #FFF; --green: #138808; --red: #ff4444; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; padding: 0; }
         
-        #loader { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; }
+        #loader { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; }
         .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top: 4px solid var(--saffron); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .screen { display: none; padding: 20px; flex-direction: column; align-items: center; min-height: 100vh; text-align: center; box-sizing: border-box; }
+        .screen { display: none; padding: 20px; flex-direction: column; align-items: center; min-height: 100vh; text-align: center; }
         .active { display: flex; }
         
-        .btn { padding: 18px; width: 100%; max-width: 300px; border-radius: 12px; border: none; font-weight: bold; background: linear-gradient(90deg, var(--saffron), var(--white), var(--green)); color: #000; margin-top: 15px; cursor: pointer; text-transform: uppercase; }
-        .btn-sec { background: #222; color: #fff; border: 1px solid #444; }
-
+        .btn { padding: 15px; width: 100%; max-width: 300px; border-radius: 12px; border: none; font-weight: bold; background: linear-gradient(90deg, var(--saffron), var(--white), var(--green)); color: #000; margin-top: 10px; cursor: pointer; text-transform: uppercase; }
+        .btn-kill { background: var(--red); color: white; padding: 5px 10px; font-size: 10px; border-radius: 5px; width: auto; margin: 0; }
+        
         .lb-card { background: #111; width: 100%; max-width: 350px; border-radius: 15px; padding: 10px; margin-top: 20px; border: 1px solid #333; }
-        .lb-row { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #222; font-size: 0.9rem; }
+        .lb-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #222; }
     </style>
 </head>
 <body>
 
-    <div id="loader">
-        <div class="spinner"></div>
-        <p id="status" style="margin-top: 20px; color: #888;">SYNCING WITH COMMAND...</p>
-    </div>
+    <div id="loader"><div class="spinner"></div><p id="load-text">CONNECTING...</p></div>
 
     <div id="screen-select" class="screen">
-        <h1 style="color: var(--saffron);">JOIN THE FORCE</h1>
-        <p style="color: #666;">Choose your specialized unit</p>
-        <button class="btn" onclick="register('ARMY')">JOIN ARMY</button>
-        <button class="btn" onclick="register('NAVY')">JOIN NAVY</button>
-        <button class="btn" onclick="register('AIR FORCE')">JOIN AIR FORCE</button>
+        <h1 style="color: var(--saffron);">SELECT UNIT</h1>
+        <button class="btn" onclick="register('ARMY')">ARMY</button>
+        <button class="btn" onclick="register('NAVY')">NAVY</button>
+        <button class="btn" onclick="register('AIR FORCE')">AIR FORCE</button>
     </div>
 
     <div id="screen-dash" class="screen">
-        <h2 id="u-name" style="margin-bottom: 0;">OFFICER</h2>
-        <p id="u-unit" style="color: var(--saffron); font-weight: bold; margin-top: 5px;"></p>
-        
-        <div style="background: radial-gradient(circle, #1a1a1a, #000); padding: 40px; border-radius: 50%; border: 3px solid var(--green); margin: 30px 0; box-shadow: 0 0 20px rgba(19, 136, 8, 0.3);">
-            <h1 id="u-missions" style="font-size: 4rem; margin: 0;">0</h1>
-            <small style="color: #666;">MISSIONS</small>
+        <h2 id="u-name">OFFICER</h2>
+        <p id="u-unit" style="color: var(--saffron);"></p>
+        <div style="padding: 30px; border: 3px solid var(--green); border-radius: 50%; margin: 20px 0;">
+            <h1 id="u-missions" style="font-size: 3rem; margin: 0;">0</h1>
         </div>
-
-        <button class="btn" onclick="updateMissions()">REPORT DUTY</button>
-        <button class="btn btn-sec" onclick="loadLeaderboard()">RANKINGS</button>
+        <button class="btn" onclick="updateMissions()">REPORT DUTY (+1)</button>
+        <button class="btn" style="background:#222; color:#fff;" onclick="loadLeaderboard()">BATTLEGROUND (RANK)</button>
     </div>
 
     <div id="screen-leaderboard" class="screen">
         <h2 style="color: var(--saffron);">TOP OFFICERS</h2>
-        <div id="leaderboard-list" class="lb-card">
-            </div>
-        <button class="btn btn-sec" onclick="show('screen-dash')">BACK</button>
+        <div id="leaderboard-list" class="lb-card"></div>
+        <button class="btn" style="background:#222; color:#fff;" onclick="show('screen-dash')">BACK</button>
     </div>
 
     <script>
-        const { Client, Databases, Query } = Appwrite;
+        const { Client, Databases } = Appwrite;
         const tg = window.Telegram.WebApp;
         tg.ready();
-        tg.expand();
 
-        // --- APWRITE CONFIG (APKE SCREENSHOT SE VERIFIED) ---
         const client = new Client()
     .setEndpoint('https://fra.cloud.appwrite.io/v1')
     .setProject('697874190033c5037d47'); // Aapki Project ID
@@ -83,55 +73,61 @@ const COLL_ID = 'users';                 // Aapki "Userr" Collection ID
                 const doc = await databases.getDocument(DB_ID, COLL_ID, USER_ID);
                 render(doc);
                 show('screen-dash');
-            } catch (err) {
-                console.log("New User Detected");
-                show('screen-select');
-            } finally {
-                document.getElementById('loader').style.display = 'none';
-            }
+            } catch (err) { show('screen-select'); }
+            finally { document.getElementById('loader').style.display = 'none'; }
         }
 
         async function register(unit) {
             try {
-                const data = { name: USER_NAME, unit: unit, missions: 0 };
-                await databases.createDocument(DB_ID, COLL_ID, USER_ID, data);
+                await databases.createDocument(DB_ID, COLL_ID, USER_ID, { name: USER_NAME, unit: unit, missions: 0 });
                 location.reload();
-            } catch (e) {
-                alert("Error: " + e.message + "\nCheck if 'name', 'unit', 'missions' columns are created!");
-            }
+            } catch (e) { alert("Setup Columns first: name, unit, missions"); }
         }
 
         async function updateMissions() {
             const m = document.getElementById('u-missions');
             const newCount = parseInt(m.innerText) + 1;
-            m.innerText = newCount; // Fast UI update
+            m.innerText = newCount;
             tg.HapticFeedback.impactOccurred('medium');
-
-            try {
-                await databases.updateDocument(DB_ID, COLL_ID, USER_ID, { missions: newCount });
-            } catch (e) { console.error("Cloud sync failed"); }
+            try { await databases.updateDocument(DB_ID, COLL_ID, USER_ID, { missions: newCount }); } catch (e) {}
         }
 
         async function loadLeaderboard() {
-            show('loader'); // Temp loader
+            document.getElementById('loader').style.display = 'flex';
             try {
-                const response = await databases.listDocuments(DB_ID, COLL_ID);
-                let users = response.documents;
-                users.sort((a, b) => b.missions - a.missions);
-
+                const res = await databases.listDocuments(DB_ID, COLL_ID);
+                let users = res.documents.sort((a,b) => b.missions - a.missions);
                 let html = "";
-                users.slice(0, 10).forEach((u, i) => {
-                    const icon = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i+1}`;
-                    html += `
-                        <div class="lb-row">
-                            <span>${icon} ${u.name}</span>
-                            <span style="color: var(--saffron); font-weight:bold;">${u.missions}</span>
-                        </div>`;
+                users.forEach((u, i) => {
+                    html += `<div class="lb-row">
+                        <div style="text-align:left;"><b>#${i+1} ${u.name}</b><br><small>${u.unit}</small></div>
+                        <div>
+                            <span style="color:var(--saffron); font-weight:bold; margin-right:10px;">${u.missions}</span>
+                            ${u.$id !== USER_ID ? `<button class="btn-kill" onclick="killUser('${u.$id}','${u.name}')">KILL</button>` : ''}
+                        </div>
+                    </div>`;
                 });
                 document.getElementById('leaderboard-list').innerHTML = html;
                 show('screen-leaderboard');
-            } catch (e) { alert("LB Error: " + e.message); }
+            } catch (e) { alert(e.message); }
             finally { document.getElementById('loader').style.display = 'none'; }
+        }
+
+        async function killUser(tId, tName) {
+            tg.HapticFeedback.notificationOccurred('warning');
+            if(!confirm(`Attack ${tName}? You gain 5, they lose 5.`)) return;
+            
+            document.getElementById('loader').style.display = 'flex';
+            try {
+                const victim = await databases.getDocument(DB_ID, COLL_ID, tId);
+                const attacker = await databases.getDocument(DB_ID, COLL_ID, USER_ID);
+                
+                await databases.updateDocument(DB_ID, COLL_ID, tId, { missions: Math.max(0, victim.missions - 5) });
+                await databases.updateDocument(DB_ID, COLL_ID, USER_ID, { missions: attacker.missions + 5 });
+                
+                alert("Target Neutralized! +5 Missions.");
+                loadLeaderboard();
+            } catch (e) { alert("Combat Error: Permissions check karein!"); }
         }
 
         function render(d) {
@@ -142,7 +138,7 @@ const COLL_ID = 'users';                 // Aapki "Userr" Collection ID
 
         function show(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            if(id !== 'loader') document.getElementById(id).classList.add('active');
+            document.getElementById(id).classList.add('active');
         }
 
         window.onload = init;
