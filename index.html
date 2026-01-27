@@ -3,179 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexus Tiranga: Global Roster</title>
+    <title>Nexus Tiranga: Supabase Elite</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root {
-            --bg-color: #050505; --card-bg: #111111;
-            --saffron: #FF9933; --white: #FFFFFF; --green: #138808;
-            --blue: #000080; --army: #4B5320; --navy: #000080; --airforce: #5D8AA8;
-        }
-
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); margin: 0; color: white; overflow: hidden; height: 100vh; }
-
-        /* --- SCREENS --- */
-        .screen { position: fixed; inset: 0; display: none; flex-direction: column; align-items: center; padding: 20px; overflow-y: auto; background: #000; z-index: 10; }
-        .active-screen { display: flex; }
-
-        /* --- FORCE STRENGTH COUNTER --- */
-        .force-stats {
-            background: rgba(255,255,255,0.05); width: 100%; max-width: 340px;
-            padding: 15px; border-radius: 12px; margin-bottom: 20px;
-            text-align: center; border: 1px dashed var(--saffron);
-        }
-
-        /* --- LEADERBOARD & ROSTER --- */
-        .roster-list { width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 10px; }
-        .officer-card {
-            display: flex; align-items: center; background: var(--card-bg);
-            padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);
-        }
-        .officer-img { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--white); margin-right: 12px; }
-        .officer-info { flex: 1; }
-        .officer-name { font-size: 0.9rem; font-weight: bold; }
-        .officer-unit { font-size: 0.65rem; color: var(--saffron); text-transform: uppercase; }
-        .officer-rank { font-size: 0.6rem; color: #888; }
-
-        /* --- BUTTONS --- */
-        .btn { width: 100%; max-width: 340px; padding: 16px; border-radius: 12px; font-weight: 900; border: none; cursor: pointer; margin-top: 10px; text-transform: uppercase; }
-        .gold-btn { background: linear-gradient(90deg, var(--saffron), var(--white), var(--green)); color: black; }
-        .nav-bar { position: fixed; bottom: 0; width: 100%; background: #111; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #333; z-index: 100; }
-        .nav-item { font-size: 0.7rem; color: #888; text-align: center; cursor: pointer; }
-        .nav-active { color: var(--saffron); font-weight: bold; }
-
-        /* --- DASHBOARD NEON --- */
-        .neon-card { position: relative; width: 280px; padding: 30px; background: var(--card-bg); border-radius: 24px; text-align: center; margin-top: 40px; }
-        .neon-card::before { content: ''; position: absolute; inset: -2px; background: linear-gradient(45deg, var(--saffron), var(--white), var(--green)); background-size: 400%; z-index: -1; border-radius: 26px; animation: flag-flow 8s linear infinite; filter: blur(8px); }
+        :root { --bg: #050505; --saffron: #FF9933; --white: #FFF; --green: #138808; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; padding-bottom: 80px; overflow-x: hidden; }
+        .screen { display: none; padding: 20px; flex-direction: column; align-items: center; min-height: 100vh; }
+        .active { display: flex; }
         
-        @keyframes flag-flow { 0% { background-position: 0% 50%; } 100% { background-position: 400% 50%; } }
+        /* Glassmorphism Cards */
+        .officer-card {
+            display: flex; align-items: center; background: rgba(255,255,255,0.03); 
+            width: 100%; max-width: 350px; padding: 15px; margin: 8px 0;
+            border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .officer-card img { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--saffron); margin-right: 15px; }
+        .info { flex: 1; }
+        .name { font-weight: bold; font-size: 1rem; }
+        .unit-tag { font-size: 0.7rem; color: var(--saffron); text-transform: uppercase; letter-spacing: 1px; }
+        .score { font-weight: 900; color: var(--green); font-size: 1.2rem; }
+
+        /* Navigation */
+        .nav { position: fixed; bottom: 0; width: 100%; background: #111; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #333; z-index: 100; }
+        .nav-btn { font-size: 0.8rem; opacity: 0.6; cursor: pointer; text-align: center; }
+        .nav-btn.active-nav { opacity: 1; color: var(--saffron); font-weight: bold; }
+        
+        .btn { padding: 16px; width: 100%; max-width: 300px; border-radius: 12px; border: none; font-weight: bold; background: linear-gradient(90deg, var(--saffron), var(--white), var(--green)); color: #000; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div id="screen-select" class="screen">
-        <h2 style="margin-top:40px;">ENLIST NOW</h2>
-        <div class="roster-list" style="margin-top:20px;">
-            <button class="btn gold-btn" onclick="setForce('ARMY', 'PARA SF')">JOIN ARMY (PARA SF)</button>
-            <button class="btn gold-btn" onclick="setForce('NAVY', 'MARCOS')">JOIN NAVY (MARCOS)</button>
-            <button class="btn gold-btn" onclick="setForce('AIR FORCE', 'GARUD')">JOIN AIR FORCE (GARUD)</button>
-        </div>
+        <h2 style="margin-top: 50px; letter-spacing: 2px;">ENLIST IN SERVICE</h2>
+        <p style="color: #888; font-size: 0.8rem;">CHOOSE YOUR PERMANENT BATTALION</p>
+        <button class="btn" style="margin-top:20px;" onclick="register('ARMY', 'Para SF')">JOIN ARMY (PARA SF)</button>
+        <button class="btn" style="margin-top:10px;" onclick="register('NAVY', 'MARCOS')">JOIN NAVY (MARCOS)</button>
+        <button class="btn" style="margin-top:10px;" onclick="register('AIR FORCE', 'GARUD')">JOIN AIR FORCE (GARUD)</button>
     </div>
 
     <div id="screen-dash" class="screen">
-        <div class="neon-card">
-            <div id="rank-tag" style="color:gold; font-size:0.7rem; border:1px solid gold; padding:2px 8px; display:inline-block; border-radius:10px;">LIEUTENANT</div>
-            <br><img id="u-img" src="" class="officer-img" style="width:80px; height:80px; margin:15px 0;">
-            <h2 id="u-name" style="margin:0;">OFFICER</h2>
-            <p id="u-unit" style="color:var(--saffron); font-size:0.8rem;"></p>
-            <button class="btn gold-btn" onclick="addService()">REPORT FOR DUTY</button>
-        </div>
+        <h3 id="rank-name" style="color:gold; border:1px solid gold; padding:5px 15px; border-radius:20px; font-size:0.7rem;">LIEUTENANT</h3>
+        <img id="my-photo" src="" style="width:100px; height:100px; border-radius:50%; border:3px solid white; margin: 20px 0;">
+        <h2 id="my-name" style="margin:0;">OFFICER</h2>
+        <p id="my-unit" style="color:var(--saffron); margin-bottom: 30px;"></p>
+        <button class="btn" onclick="updateMissions()">REPORT FOR DUTY</button>
     </div>
 
     <div id="screen-roster" class="screen">
-        <h2 style="margin-top:20px;">FORCE BATTALION</h2>
-        <div class="force-stats">
-            <span style="font-size: 0.8rem; color: #aaa;">TOTAL STRENGTH</span><br>
-            <span style="font-size: 1.5rem; font-weight: 900;" id="total-joined">14,209 SOLDIERS</span>
-        </div>
-
-        <div class="roster-list" id="roster-items">
-            <div class="officer-card" style="border: 1px solid var(--saffron);">
-                <img id="my-img-small" src="" class="officer-img">
-                <div class="officer-info">
-                    <div class="officer-name" id="my-name-lb">YOU</div>
-                    <div class="officer-unit" id="my-unit-lb">UNIT PENDING</div>
-                </div>
-                <div class="officer-rank" id="my-score-lb">0 MISSIONS</div>
+        <h2 style="letter-spacing: 2px;">LIVE BATTALION</h2>
+        <div id="roster-container" style="width:100%; display:flex; flex-direction:column; align-items:center;">
             </div>
-            
-            <hr style="width:100%; border:0; border-top:1px solid #333; margin:10px 0;">
-            
-            <div class="officer-card">
-                <img src="https://i.pravatar.cc/100?u=1" class="officer-img">
-                <div class="officer-info">
-                    <div class="officer-name">Vikram Singh</div>
-                    <div class="officer-unit">ARMY • PARA SF</div>
-                </div>
-                <div class="officer-rank">422 MISSIONS</div>
-            </div>
-            <div class="officer-card">
-                <img src="https://i.pravatar.cc/100?u=2" class="officer-img">
-                <div class="officer-info">
-                    <div class="officer-name">Ananya Iyer</div>
-                    <div class="officer-unit">NAVY • MARCOS</div>
-                </div>
-                <div class="officer-rank">389 MISSIONS</div>
-            </div>
-        </div>
     </div>
 
-    <div class="nav-bar">
-        <div class="nav-item" onclick="showScreen('screen-dash')">🏠<br>BASE</div>
-        <div class="nav-item" onclick="showScreen('screen-roster')">🎖️<br>ROSTER</div>
+    <div class="nav">
+        <div class="nav-btn active-nav" id="n-dash" onclick="show('screen-dash')">🏠 BASE</div>
+        <div class="nav-btn" id="n-roster" onclick="show('screen-roster')">🎖️ ROSTER</div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.ready(); tg.expand();
+        tg.ready();
 
-        function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active-screen'));
-            document.getElementById(id).classList.add('active-screen');
-            tg.HapticFeedback.impactOccurred('light');
-        }
+        // REPLACE THESE WITH YOUR SUPABASE KEYS
+        const SB_URL = "https://jdqkfjwijcpdnssmniov.supabase.co";
+        const SB_KEY = "sb_publishable_IiBbaB2MksFIeosGpneqxA_Cmqmi4Am";
+        const supabase = exports.supabasejs.createClient(SB_URL, SB_KEY);
 
-        window.onload = () => {
-            const b = localStorage.getItem('p_branch');
-            const u = localStorage.getItem('p_unit');
-            if (b && u) {
-                updateUI(b, u);
-                showScreen('screen-dash');
+        const user = tg.initDataUnsafe?.user || { id: 12345, first_name: "Local_Test", photo_url: "" };
+        let myData = null;
+
+        async function checkUser() {
+            const { data, error } = await supabase.from('officers').select('*').eq('id', user.id).single();
+            if (data) {
+                myData = data;
+                renderDash();
+                show('screen-dash');
             } else {
-                showScreen('screen-select');
+                show('screen-select');
             }
-            loadUser();
-        };
-
-        function setForce(b, u) {
-            localStorage.setItem('p_branch', b);
-            localStorage.setItem('p_unit', u);
-            updateUI(b, u);
-            showScreen('screen-dash');
-            tg.HapticFeedback.notificationOccurred('success');
         }
 
-        function updateUI(b, u) {
-            document.getElementById('u-unit').innerText = b + " • " + u;
-            document.getElementById('my-unit-lb').innerText = b + " • " + u;
-            
-            const s = localStorage.getItem('s_rec') || "0";
-            document.getElementById('my-score-lb').innerText = s + " MISSIONS";
+        async function register(branch, unit) {
+            const newUser = {
+                id: user.id,
+                name: user.first_name,
+                photo: user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=FF9933&color=fff`,
+                branch: branch,
+                unit: unit,
+                missions: 0
+            };
+            const { error } = await supabase.from('officers').insert([newUser]);
+            if (!error) {
+                myData = newUser;
+                renderDash();
+                show('screen-dash');
+                tg.HapticFeedback.notificationOccurred('success');
+            }
+        }
+
+        async function updateMissions() {
+            const { data, error } = await supabase.rpc('increment_missions', { user_id: user.id });
+            myData.missions += 1;
+            renderDash();
+            tg.HapticFeedback.impactOccurred('medium');
+            tg.showAlert("Duty Reported, Officer!");
+        }
+
+        function renderDash() {
+            document.getElementById('my-name').innerText = myData.name.toUpperCase();
+            document.getElementById('my-unit').innerText = `${myData.branch} • ${myData.unit}`;
+            document.getElementById('my-photo').src = myData.photo;
             
             let rank = "LIEUTENANT";
-            if(s >= 10) rank = "GENERAL";
-            else if(s >= 5) rank = "MAJOR";
-            document.getElementById('rank-tag').innerText = rank;
+            if(myData.missions >= 20) rank = "GENERAL";
+            else if(myData.missions >= 10) rank = "MAJOR";
+            document.getElementById('rank-name').innerText = rank;
         }
 
-        function addService() {
-            let s = parseInt(localStorage.getItem('s_rec') || "0") + 1;
-            localStorage.setItem('s_rec', s);
-            updateUI(localStorage.getItem('p_branch'), localStorage.getItem('p_unit'));
-            tg.HapticFeedback.notificationOccurred('success');
-            tg.showAlert("Mission Logged! Jai Hind.");
+        async function loadRoster() {
+            const { data, error } = await supabase.from('officers').select('*').order('missions', { ascending: false }).limit(20);
+            const container = document.getElementById('roster-container');
+            container.innerHTML = "";
+            data.forEach(off => {
+                container.innerHTML += `
+                    <div class="officer-card">
+                        <img src="${off.photo}">
+                        <div class="info">
+                            <div class="name">${off.name}</div>
+                            <div class="unit-tag">${off.branch} • ${off.unit}</div>
+                        </div>
+                        <div class="score">${off.missions}</div>
+                    </div>
+                `;
+            });
         }
 
-        function loadUser() {
-            const user = tg.initDataUnsafe?.user;
-            const name = user ? user.first_name.toUpperCase() : "OFFICER";
-            const img = user?.photo_url || `https://ui-avatars.com/api/?name=${name}&background=FF9933&color=fff`;
-            
-            document.getElementById('u-name').innerText = name;
-            document.getElementById('my-name-lb').innerText = name + " (YOU)";
-            document.getElementById('u-img').src = img;
-            document.getElementById('my-img-small').src = img;
+        function show(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-nav'));
+            if(id === 'screen-dash') document.getElementById('n-dash').classList.add('active-nav');
+            if(id === 'screen-roster') {
+                document.getElementById('n-roster').classList.add('active-nav');
+                loadRoster();
+            }
         }
+
+        checkUser();
     </script>
 </body>
 </html>
