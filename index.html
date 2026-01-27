@@ -3,206 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexus Tiranga Hub Pro</title>
+    <title>Nexus Tiranga: Badge Edition</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --bg-color: #050505;
-            --card-bg: #111111;
-            --saffron: #FF9933;
-            --white: #FFFFFF;
-            --green: #138808;
-            --blue: #000080;
+            --bg-color: #050505; --card-bg: #111111;
+            --saffron: #FF9933; --white: #FFFFFF; --green: #138808;
+            --army: #4B5320; --navy: #000080; --airforce: #5D8AA8;
         }
 
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: var(--bg-color);
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-            color: white;
+            font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color);
+            margin: 0; display: flex; justify-content: center; align-items: center;
+            height: 100vh; overflow: hidden; color: white;
         }
 
-        /* --- LOADER SCREEN --- */
-        #loader {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-color);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            transition: opacity 0.8s ease, visibility 0.8s;
+        /* --- Force Selection --- */
+        #force-selection {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color); z-index: 999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
 
-        .loader-chakra {
-            width: 100px;
-            height: 100px;
-            border: 2px solid var(--blue);
-            border-radius: 50%;
-            position: relative;
-            animation: spin 3s linear infinite;
+        .force-card {
+            width: 85%; max-width: 300px; padding: 20px; margin: 10px 0;
+            border-radius: 15px; cursor: pointer; text-align: center;
+            font-weight: 900; transition: 0.3s; border: 2px solid transparent;
         }
+        .army-card { background: var(--army); border-color: #6B8E23; }
+        .navy-card { background: var(--navy); border-color: #4169E1; }
+        .airforce-card { background: var(--airforce); border-color: #B0C4DE; }
 
-        .loader-chakra::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: repeating-conic-gradient(transparent 0deg 14deg, var(--blue) 14deg 15deg);
-            border-radius: 50%;
-        }
-
-        /* --- BACKGROUND PETALS --- */
-        .petal {
-            position: absolute;
-            top: -10%;
-            border-radius: 0 50% 0 50%;
-            opacity: 0.6;
-            pointer-events: none;
-            animation: fall linear infinite;
-        }
-
-        /* --- MAIN CARD --- */
+        /* --- Dashboard --- */
         .neon-card {
-            position: relative;
-            width: 310px;
-            padding: 30px 20px;
-            background: var(--card-bg);
-            border-radius: 24px;
-            text-align: center;
-            z-index: 10;
+            position: relative; width: 310px; padding: 30px 20px;
+            background: var(--card-bg); border-radius: 24px; text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        .neon-card::before {
-            content: ''; position: absolute; top: -3px; left: -3px; right: -3px; bottom: -3px;
-            background: linear-gradient(45deg, var(--saffron), var(--white), var(--green), var(--saffron));
-            background-size: 400%; z-index: -1; border-radius: 27px; animation: flag-flow 8s linear infinite; filter: blur(12px);
+        /* The Badge Display */
+        #badge-display {
+            width: 60px; height: 60px; margin: -50px auto 10px;
+            background: var(--card-bg); border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 2rem; border: 3px solid var(--saffron);
+            box-shadow: 0 0 15px var(--saffron);
+            z-index: 100; position: relative;
         }
 
-        /* Audio Toggle */
-        .audio-toggle {
-            position: absolute; top: 20px; right: 20px; width: 40px; height: 40px;
-            background: var(--card-bg); border: 1px solid var(--white); border-radius: 50%;
-            display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 100;
-        }
-
-        .playing { border-color: var(--saffron); box-shadow: 0 0 10px var(--saffron); }
-
-        /* Buttons */
-        .btn {
-            width: 100%; padding: 14px; border-radius: 12px; font-weight: 900; 
-            cursor: pointer; border: none; margin-top: 10px; transition: 0.2s;
-        }
-
-        .share-btn { background: transparent; color: white; border: 1px solid white; }
-        .start-btn { background: linear-gradient(90deg, var(--saffron), var(--white), var(--green)); color: black; }
-
-        /* Animations */
-        @keyframes flag-flow { 0% { background-position: 0% 50%; } 100% { background-position: 400% 50%; } }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes fall { 0% { transform: translateY(0) rotate(0deg); opacity: 0; } 100% { transform: translateY(110vh) rotate(360deg); opacity: 0; } }
+        .btn { width: 100%; padding: 15px; border-radius: 12px; font-weight: 900; cursor: pointer; border: none; margin-top: 15px; }
+        .confirm-btn { background: linear-gradient(90deg, var(--saffron), var(--white), var(--green)); color: black; }
+        
+        select { width: 85%; padding: 12px; margin-top: 10px; background: #222; color: white; border-radius: 10px; border: 1px solid #444; }
     </style>
 </head>
 <body>
 
-    <div id="loader">
-        <div class="loader-chakra"></div>
-        <p style="margin-top: 20px; letter-spacing: 2px;">JAI HIND...</p>
-    </div>
-
-    <audio id="bg-music" loop>
-        <source src="vande_mataram.mp3" type="audio/mpeg">
-    </audio>
-
-    <div class="audio-toggle" id="audioToggle">
-        <span id="audioIcon">🔇</span>
-    </div>
-
-    <div id="petal-container"></div>
-
-    <div class="neon-card">
-        <div id="live-clock" style="color: var(--saffron); font-size: 0.8rem; margin-bottom: 10px;">00:00:00</div>
+    <div id="force-selection">
+        <h2 style="letter-spacing: 2px;">CHOOSE YOUR COMMAND</h2>
         
-        <div style="position: relative; width: 100px; height: 100px; margin: 0 auto 15px;">
-            <div class="loader-chakra" style="position: absolute; width: 100%; height: 100%; opacity: 0.3;"></div>
-            <img id="user-photo" src="https://ui-avatars.com/api/?name=User" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid white; margin-top: 10px;">
+        <div class="force-card army-card" onclick="showUnits('Army')">⚔️ INDIAN ARMY</div>
+        <div class="force-card navy-card" onclick="showUnits('Navy')">⚓ INDIAN NAVY</div>
+        <div class="force-card airforce-card" onclick="showUnits('AirForce')">✈️ INDIAN AIR FORCE</div>
+
+        <div id="unit-box" style="display:none; width:100%; text-align:center;">
+            <select id="unit-select"></select>
+            <button class="btn confirm-btn" style="width: 85%;" onclick="applyBadge()">PROCEED TO BASE</button>
         </div>
+    </div>
 
-        <h2 id="user-name" style="margin: 5px 0;">GUEST</h2>
-        <p style="font-size: 0.7rem; color: #888; margin-bottom: 20px;">CITIZEN ID: <span id="user-id-val">00000000</span></p>
-
-        <button class="btn share-btn" id="shareBtn">📤 SHARE PROFILE</button>
-        <button class="btn start-btn" id="startBtn">START SESSION</button>
+    <div class="neon-card" id="dashboard" style="display:none; margin-top: 40px;">
+        <div id="badge-display">🇮🇳</div>
+        <h3 id="unit-title" style="margin: 0; color: var(--saffron); font-size: 0.8rem;">UNIT NAME</h3>
+        <img id="user-photo" src="" style="width: 90px; height: 90px; border-radius: 50%; border: 3px solid white; margin: 15px 0;">
+        <h2 id="user-name" style="margin: 0;">OFFICER</h2>
+        <p id="service-text" style="font-size: 0.7rem; color: #888;"></p>
+        <button class="btn confirm-btn" onclick="finish()">SALUTE & EXIT</button>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
+        tg.ready(); tg.expand();
 
-        // 1. Loader Handle
-        window.onload = () => {
-            setTimeout(() => {
-                document.getElementById('loader').style.opacity = '0';
-                setTimeout(() => { document.getElementById('loader').style.display = 'none'; }, 800);
-            }, 1500);
+        const data = {
+            Army: { units: ['Para SF', 'Gorkha Rifles', 'Sikh Regt'], badge: '⚔️' },
+            Navy: { units: ['MARCOS', 'Naval Pilots', 'Submariners'], badge: '⚓' },
+            AirForce: { units: ['Garud', 'Fighter Wing', 'Skylords'], badge: '🦅' }
         };
 
-        // 2. Audio Control
-        const audio = document.getElementById('bg-music');
-        const audioBtn = document.getElementById('audioToggle');
-        let playing = false;
+        let currentForce = "";
 
-        audioBtn.onclick = () => {
-            if (!playing) {
-                audio.play().catch(() => alert("Add vande_mataram.mp3 to folder!"));
-                document.getElementById('audioIcon').innerText = "🔊";
-                audioBtn.classList.add('playing');
-            } else {
-                audio.pause();
-                document.getElementById('audioIcon').innerText = "🔇";
-                audioBtn.classList.remove('playing');
-            }
-            playing = !playing;
-            tg.HapticFeedback.impactOccurred('light');
-        };
+        function showUnits(force) {
+            currentForce = force;
+            const select = document.getElementById('unit-select');
+            select.innerHTML = "";
+            data[force].units.forEach(u => {
+                let opt = document.createElement('option');
+                opt.value = u; opt.innerText = u;
+                select.appendChild(opt);
+            });
+            document.getElementById('unit-box').style.display = 'block';
+            tg.HapticFeedback.impactOccurred('medium');
+        }
 
-        // 3. User Data
+        function applyBadge() {
+            const unit = document.getElementById('unit-select').value;
+            document.getElementById('force-selection').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            
+            // Set Badge and Colors
+            const display = document.getElementById('badge-display');
+            display.innerText = data[currentForce].badge;
+            
+            document.getElementById('unit-title').innerText = unit.toUpperCase();
+            document.getElementById('service-text').innerText = "OFFICIALLY APPOINTED TO THE " + currentForce.toUpperCase();
+            
+            tg.HapticFeedback.notificationOccurred('success');
+        }
+
+        // Load User Info
         const user = tg.initDataUnsafe?.user;
         if (user) {
             document.getElementById('user-name').innerText = user.first_name.toUpperCase();
-            document.getElementById('user-id-val').innerText = user.id;
             document.getElementById('user-photo').src = user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=FF9933&color=fff`;
         }
 
-        // 4. Petals
-        function createPetal() {
-            const p = document.createElement('div');
-            p.className = 'petal';
-            p.style.cssText = `width:10px; height:10px; left:${Math.random()*100}vw; background:${Math.random()>0.5?'#FF9933':'#138808'}; animation-duration:${Math.random()*3+4}s;`;
-            document.getElementById('petal-container').appendChild(p);
-            setTimeout(() => p.remove(), 6000);
-        }
-        setInterval(createPetal, 400);
-
-        // 5. Buttons
-        document.getElementById('shareBtn').onclick = () => {
-            tg.switchInlineQuery("Check out my Patriotic Profile on Nexus Hub! 🇮🇳", ['users', 'groups']);
-        };
-
-        document.getElementById('startBtn').onclick = () => {
-            tg.HapticFeedback.notificationOccurred('success');
-            tg.sendData(`Session: ${user?.first_name || 'User'}`);
+        function finish() {
+            tg.sendData(`Appointed: ${document.getElementById('unit-title').innerText}`);
             tg.close();
-        };
-
-        setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
+        }
     </script>
 </body>
 </html>
-
