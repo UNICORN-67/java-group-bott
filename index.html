@@ -9,14 +9,14 @@
 
     <style>
         :root { --bg: #000; --saffron: #FF9933; --white: #FFF; --green: #138808; }
-        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; padding: 0; }
+        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; padding: 0; overflow: hidden; }
         #loader { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
         .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top: 4px solid var(--saffron); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .screen { display: none; padding: 20px; flex-direction: column; align-items: center; min-height: 100vh; justify-content: center; }
         .active { display: flex; }
-        .btn { padding: 18px; width: 100%; max-width: 300px; border-radius: 12px; border: none; font-weight: bold; background: linear-gradient(90deg, var(--saffron), var(--white), var(--green)); color: #000; margin-top: 15px; cursor: pointer; }
-        #debug-log { font-size: 10px; color: #444; position: fixed; bottom: 80px; width: 100%; text-align: center; }
+        .btn { padding: 18px; width: 100%; max-width: 300px; border-radius: 15px; border: none; font-weight: bold; background: linear-gradient(90deg, var(--saffron), var(--white), var(--green)); color: #000; margin-top: 15px; cursor: pointer; font-size: 1rem; }
+        #debug-log { font-size: 12px; color: #ff4444; margin-top: 20px; text-align: center; width: 80%; }
     </style>
 </head>
 <body>
@@ -24,22 +24,24 @@
     <div id="loader">
         <div class="spinner"></div>
         <p id="status" style="margin-top: 20px; color: #888;">CONNECTING TO COMMAND...</p>
+        <div id="debug-log"></div>
     </div>
 
     <div id="screen-select" class="screen">
-        <h2 style="color: var(--saffron);">JOIN THE FORCE</h2>
+        <h1 style="color: var(--saffron); margin-bottom: 30px;">JOIN THE FORCE</h1>
         <button class="btn" onclick="register('ARMY')">JOIN ARMY</button>
         <button class="btn" onclick="register('NAVY')">JOIN NAVY</button>
+        <button class="btn" onclick="register('AIR FORCE')">JOIN AIR FORCE</button>
     </div>
 
     <div id="screen-dash" class="screen">
         <h2 id="u-name">OFFICER</h2>
-        <p id="u-unit" style="color: var(--saffron);"></p>
-        <h1 id="u-missions" style="font-size: 4rem; margin: 0;">0</h1>
+        <p id="u-unit" style="color: var(--saffron); font-weight: bold;"></p>
+        <div style="background: #111; padding: 30px; border-radius: 50%; border: 2px solid var(--green); margin: 20px 0;">
+            <h1 id="u-missions" style="font-size: 4rem; margin: 0;">0</h1>
+        </div>
         <button class="btn" onclick="updateMissions()">REPORT DUTY</button>
     </div>
-
-    <div id="debug-log"></div>
 
     <script>
         const { Client, Databases } = Appwrite;
@@ -47,39 +49,33 @@
         tg.ready();
         tg.expand();
 
-        // --- DHAYAN SE INHE REPLACE KAREIN ---
-        const PROJECT_ID = '6978741500187f1f0cb6'; 
-        const DB_ID = '69787a2500186518b2d0'; 
-        const COLL_ID = '697878cd00178ab7b0da'; 
-        // -------------------------------------
+        // --- APWRITE CONFIG (DASHBOARD SE COPY KAREIN) ---
+        const client = new Client()
+            .setEndpoint('https://fra.cloud.appwrite.io/v1')
+            .setProject('697874190033c5037d47'); // <--- Dashboard Settings se
 
-        const client = new Client().setEndpoint('https://fra.cloud.appwrite.io/v1').setProject(PROJECT_ID);
         const databases = new Databases(client);
-        
+        const DB_ID = '6978749b001103ca1fdf';    // <--- Database tab se
+        const COLL_ID = '69787c5c000d7b6a1f1d'; // <--- Collection tab se
+        // ------------------------------------------------
+
         const USER_ID = tg.initDataUnsafe?.user?.id?.toString() || "tester_123";
         const USER_NAME = tg.initDataUnsafe?.user?.first_name || "OFFICER";
 
-        function log(msg) { document.getElementById('debug-log').innerText = msg; }
-
         async function init() {
-            log("Checking local storage...");
-            const local = localStorage.getItem('nexus_user');
-            
-            if (local) {
-                render(JSON.parse(local));
-                show('screen-dash');
-                document.getElementById('loader').style.display = 'none';
-            }
-
             try {
-                log("Fetching from Appwrite...");
-                const doc = await databases.getDocument(DB_ID, COLL_ID, USER_ID);
-                localStorage.setItem('nexus_user', JSON.stringify(doc));
-                render(doc);
+                // Try to get data from Appwrite
+                const response = await databases.getDocument(DB_ID, COLL_ID, USER_ID);
+                render(response);
                 show('screen-dash');
             } catch (err) {
-                log("User not found, showing selection");
-                if (!local) show('screen-select');
+                console.log("Error or User not found:", err.message);
+                // Agar user nahi hai toh selection dikhayein
+                if (err.code === 404 || err.message.includes('fetch')) {
+                    show('screen-select');
+                } else {
+                    document.getElementById('debug-log').innerText = "Connection Error: " + err.message;
+                }
             } finally {
                 document.getElementById('loader').style.display = 'none';
             }
@@ -88,23 +84,25 @@
         async function register(unit) {
             try {
                 const data = { name: USER_NAME, unit: unit, missions: 0 };
+                // Create document in Appwrite
                 await databases.createDocument(DB_ID, COLL_ID, USER_ID, data);
-                localStorage.setItem('nexus_user', JSON.stringify(data));
                 location.reload();
             } catch (e) {
-                alert("Appwrite Error: " + e.message);
+                alert("Registration Error: " + e.message);
             }
         }
 
         async function updateMissions() {
             const m = document.getElementById('u-missions');
             const newCount = parseInt(m.innerText) + 1;
-            document.getElementById('u-missions').innerText = newCount;
-            tg.HapticFeedback.impactOccurred('light');
-
             try {
+                // Update mission count in background
                 await databases.updateDocument(DB_ID, COLL_ID, USER_ID, { missions: newCount });
-            } catch (e) { console.error("Cloud sync failed"); }
+                m.innerText = newCount;
+                tg.HapticFeedback.impactOccurred('light');
+            } catch (e) {
+                console.error("Sync failed");
+            }
         }
 
         function render(d) {
