@@ -9,72 +9,77 @@
 
     <style>
         :root { --bg: #000; --saffron: #FF9933; --white: #FFF; --green: #138808; }
-        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; padding: 0; overflow: hidden; }
-        
-        #loader { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; text-align: center; }
+        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; padding: 0; }
+        #loader { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
         .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top: 4px solid var(--saffron); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
         .screen { display: none; padding: 20px; flex-direction: column; align-items: center; min-height: 100vh; justify-content: center; }
         .active { display: flex; }
-        
-        .btn { padding: 16px; width: 100%; max-width: 300px; border-radius: 12px; border: none; font-weight: bold; background: linear-gradient(90deg, var(--saffron), var(--white), var(--green)); color: #000; margin-top: 12px; cursor: pointer; text-transform: uppercase; }
-        #error-log { color: #ff4444; font-size: 0.8rem; margin-top: 20px; padding: 10px; }
+        .btn { padding: 18px; width: 100%; max-width: 300px; border-radius: 12px; border: none; font-weight: bold; background: linear-gradient(90deg, var(--saffron), var(--white), var(--green)); color: #000; margin-top: 15px; cursor: pointer; }
+        #debug-log { font-size: 10px; color: #444; position: fixed; bottom: 80px; width: 100%; text-align: center; }
     </style>
 </head>
 <body>
 
     <div id="loader">
         <div class="spinner"></div>
-        <p id="status" style="margin-top:20px; color:#888;">INITIALIZING COMMAND...</p>
-        <div id="error-log"></div>
+        <p id="status" style="margin-top: 20px; color: #888;">CONNECTING TO COMMAND...</p>
     </div>
 
     <div id="screen-select" class="screen">
-        <h2 style="margin-bottom: 30px;">CHOOSE YOUR UNIT</h2>
+        <h2 style="color: var(--saffron);">JOIN THE FORCE</h2>
         <button class="btn" onclick="register('ARMY')">JOIN ARMY</button>
         <button class="btn" onclick="register('NAVY')">JOIN NAVY</button>
-        <button class="btn" onclick="register('AIR FORCE')">JOIN AIR FORCE</button>
     </div>
 
     <div id="screen-dash" class="screen">
         <h2 id="u-name">OFFICER</h2>
-        <p id="u-unit" style="color:var(--saffron); font-weight:bold;"></p>
-        <h1 id="u-missions" style="font-size: 5rem; margin: 10px 0;">0</h1>
+        <p id="u-unit" style="color: var(--saffron);"></p>
+        <h1 id="u-missions" style="font-size: 4rem; margin: 0;">0</h1>
         <button class="btn" onclick="updateMissions()">REPORT DUTY</button>
     </div>
 
+    <div id="debug-log"></div>
+
     <script>
-        const { Client, Databases, ID } = Appwrite;
+        const { Client, Databases } = Appwrite;
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
 
-        // --- APWRITE DASHBOARD SE YE COPY KAREIN ---
-        const client = new Client()
-            .setEndpoint('https://fra.cloud.appwrite.io/v1')
-            .setProject('697874190033c5037d47'); // <--- Dashboard se copy karein
+        // --- DHAYAN SE INHE REPLACE KAREIN ---
+        const PROJECT_ID = '6978741500187f1f0cb6'; 
+        const DB_ID = '69787a2500186518b2d0'; 
+        const COLL_ID = '697878cd00178ab7b0da'; 
+        // -------------------------------------
 
+        const client = new Client().setEndpoint('https://fra.cloud.appwrite.io/v1').setProject(PROJECT_ID);
         const databases = new Databases(client);
-        const DB_ID = '6978749b001103ca1fdf';      // <--- Database ID
-        const COLL_ID = '697878cd00178ab7b0da';  // <--- Collection ID
-        // ------------------------------------------
+        
+        const USER_ID = tg.initDataUnsafe?.user?.id?.toString() || "tester_123";
+        const USER_NAME = tg.initDataUnsafe?.user?.first_name || "OFFICER";
 
-        const USER_ID = tg.initDataUnsafe?.user?.id?.toString() || "123456";
-        const USER_NAME = tg.initDataUnsafe?.user?.first_name || "Officer";
+        function log(msg) { document.getElementById('debug-log').innerText = msg; }
 
         async function init() {
+            log("Checking local storage...");
+            const local = localStorage.getItem('nexus_user');
+            
+            if (local) {
+                render(JSON.parse(local));
+                show('screen-dash');
+                document.getElementById('loader').style.display = 'none';
+            }
+
             try {
-                // Check if user exists
+                log("Fetching from Appwrite...");
                 const doc = await databases.getDocument(DB_ID, COLL_ID, USER_ID);
+                localStorage.setItem('nexus_user', JSON.stringify(doc));
                 render(doc);
                 show('screen-dash');
             } catch (err) {
-                if (err.code === 404) {
-                    show('screen-select');
-                } else {
-                    document.getElementById('error-log').innerHTML = "ERROR: " + err.message + "<br>Check IDs and Permissions.";
-                }
+                log("User not found, showing selection");
+                if (!local) show('screen-select');
             } finally {
                 document.getElementById('loader').style.display = 'none';
             }
@@ -84,23 +89,22 @@
             try {
                 const data = { name: USER_NAME, unit: unit, missions: 0 };
                 await databases.createDocument(DB_ID, COLL_ID, USER_ID, data);
+                localStorage.setItem('nexus_user', JSON.stringify(data));
                 location.reload();
             } catch (e) {
-                alert("Registration Failed: " + e.message);
+                alert("Appwrite Error: " + e.message);
             }
         }
 
         async function updateMissions() {
-            const mLabel = document.getElementById('u-missions');
-            const currentMissions = parseInt(mLabel.innerText);
-            
+            const m = document.getElementById('u-missions');
+            const newCount = parseInt(m.innerText) + 1;
+            document.getElementById('u-missions').innerText = newCount;
+            tg.HapticFeedback.impactOccurred('light');
+
             try {
-                await databases.updateDocument(DB_ID, COLL_ID, USER_ID, { missions: currentMissions + 1 });
-                mLabel.innerText = currentMissions + 1;
-                tg.HapticFeedback.impactOccurred('medium');
-            } catch (e) {
-                console.error("Update failed", e);
-            }
+                await databases.updateDocument(DB_ID, COLL_ID, USER_ID, { missions: newCount });
+            } catch (e) { console.error("Cloud sync failed"); }
         }
 
         function render(d) {
@@ -110,8 +114,8 @@
         }
 
         function show(id) {
-            document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
-            document.getElementById(id).style.display = 'flex';
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
         }
 
         window.onload = init;
