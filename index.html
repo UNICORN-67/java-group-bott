@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexus Tiranga: Elite Command</title>
+    <title>Nexus Tiranga: Permanent Command</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -30,7 +30,6 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg-color); display: flex; flex-direction: column;
             justify-content: center; align-items: center; z-index: 10000;
-            transition: 0.8s;
         }
         .loader-chakra {
             width: 80px; height: 80px; border: 2px solid var(--blue);
@@ -42,70 +41,51 @@
             border-radius: 50%;
         }
 
-        /* --- FORCE SELECTION (STYLISH) --- */
+        /* --- SELECTION SCREEN --- */
         #force-selection {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, #111 0%, #000 100%); z-index: 999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 20px; box-sizing: border-box;
+            background: #000; z-index: 999; display: none; flex-direction: column; 
+            align-items: center; padding: 20px; overflow-y: auto;
         }
 
-        .selection-container { width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 15px; }
+        .selection-container { width: 100%; max-width: 350px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 40px; }
 
         .force-btn {
             padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(255,255,255,0.03); backdrop-filter: blur(10px);
-            cursor: pointer; transition: 0.3s; display: flex; flex-direction: column;
+            background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); cursor: pointer;
+            transition: 0.3s;
         }
         .army-btn { border-left: 5px solid var(--army); }
         .navy-btn { border-left: 5px solid var(--navy); }
         .airforce-btn { border-left: 5px solid var(--airforce); }
 
-        .force-btn:active { transform: scale(0.98); background: rgba(255,255,255,0.08); }
-
         .battalion-grid {
             display: none; grid-template-columns: 1fr 1fr; gap: 8px;
-            width: 100%; margin-top: 15px; animation: slideDown 0.4s ease forwards;
+            width: 100%; margin-top: 15px; animation: slideDown 0.3s ease;
         }
         .battalion-item {
-            background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px;
-            font-size: 0.7rem; font-weight: bold; text-align: center; border: 1px solid rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.08); padding: 12px 8px; border-radius: 8px;
+            font-size: 0.65rem; font-weight: bold; text-align: center; border: 1px solid rgba(255,255,255,0.05);
+            text-transform: uppercase;
         }
+        .battalion-item:active { background: var(--saffron); color: black; }
 
-        /* --- MAIN DASHBOARD --- */
-        .neon-card {
-            position: relative; width: 310px; padding: 40px 20px;
-            background: var(--card-bg); border-radius: 24px; text-align: center;
-        }
-        .neon-card::before {
-            content: ''; position: absolute; top: -3px; left: -3px; right: -3px; bottom: -3px;
-            background: linear-gradient(45deg, var(--saffron), var(--white), var(--green));
-            background-size: 400%; z-index: -1; border-radius: 27px; animation: flag-flow 8s linear infinite; filter: blur(12px);
-        }
+        /* --- DASHBOARD --- */
+        #dashboard { display: none; animation: fadeIn 1s ease; }
+        .neon-card { position: relative; width: 310px; padding: 40px 20px; background: var(--card-bg); border-radius: 24px; text-align: center; }
+        .neon-card::before { content: ''; position: absolute; top: -3px; left: -3px; right: -3px; bottom: -3px; background: linear-gradient(45deg, var(--saffron), var(--white), var(--green)); background-size: 400%; z-index: -1; border-radius: 27px; animation: flag-flow 8s linear infinite; filter: blur(12px); }
 
-        #rank-badge {
-            display: inline-block; padding: 4px 12px; border-radius: 50px;
-            font-size: 0.7rem; font-weight: bold; border: 1px solid gold; color: gold;
-        }
+        #rank-badge { display: inline-block; padding: 4px 12px; border-radius: 50px; font-size: 0.7rem; font-weight: bold; border: 1px solid gold; color: gold; }
+        #user-photo { width: 85px; height: 85px; border-radius: 50%; border: 2px solid white; margin: 15px 0; object-fit: cover; }
+        .finish-btn { width: 100%; padding: 16px; border-radius: 14px; font-weight: 900; cursor: pointer; border: none; margin-top: 20px; background: linear-gradient(90deg, var(--saffron), var(--white), var(--green)); color: black; }
 
-        #user-photo { width: 90px; height: 90px; border-radius: 50%; border: 3px solid white; margin: 15px 0; }
-
-        .finish-btn {
-            width: 100%; padding: 16px; border-radius: 14px; font-weight: 900;
-            cursor: pointer; border: none; margin-top: 20px;
-            background: linear-gradient(90deg, var(--saffron), var(--white), var(--green)); color: black;
-        }
-
-        /* --- ANIMATIONS --- */
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        /* --- UTILS & ANIMS --- */
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes flag-flow { 0% { background-position: 0% 50%; } 100% { background-position: 400% 50%; } }
 
-        .audio-toggle {
-            position: absolute; top: 20px; right: 20px; width: 40px; height: 40px;
-            background: var(--card-bg); border: 1px solid var(--white); border-radius: 50%;
-            display: flex; justify-content: center; align-items: center; z-index: 1001;
-        }
+        .audio-toggle { position: absolute; top: 20px; right: 20px; width: 40px; height: 40px; background: var(--card-bg); border: 1px solid var(--white); border-radius: 50%; display: flex; justify-content: center; align-items: center; z-index: 1001; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -115,116 +95,138 @@
 
     <div id="loader">
         <div class="loader-chakra"></div>
-        <p style="margin-top:20px; letter-spacing:3px; font-size: 0.7rem;">COMMAND CENTER INITIALIZING...</p>
+        <p style="margin-top:20px; letter-spacing:3px; font-size: 0.7rem;">ESTABLISHING SECURE CONNECTION...</p>
     </div>
 
     <div id="force-selection">
-        <h2 style="letter-spacing: 2px; margin-bottom: 20px;">SELECT SERVICE</h2>
+        <h2 style="letter-spacing: 2px; margin-top: 40px; text-align: center;">CHOOSE YOUR COMMAND</h2>
+        <p style="font-size: 0.6rem; color: #FF4444; margin-bottom: 20px; text-align: center; font-weight: bold;">[!] WARNING: THIS CHOICE CANNOT BE CHANGED</p>
         <div class="selection-container">
-            <div class="force-btn army-btn" onclick="toggleUnits('army', this)">
-                <span style="font-weight:900;">INDIAN ARMY</span>
-                <span style="font-size:0.6rem; color:#aaa;">SERVICE BEFORE SELF</span>
-                <div id="army-units" class="battalion-grid">
-                    <div class="battalion-item" onclick="confirmSelection('INDIAN ARMY', 'Para SF')">PARA SF</div>
-                    <div class="battalion-item" onclick="confirmSelection('INDIAN ARMY', 'Gorkha Rifles')">GORKHA RIFLES</div>
+            <div class="force-btn army-btn" onclick="toggleUnits(this)">
+                <span style="font-weight:900; display:block;">INDIAN ARMY</span>
+                <span style="font-size:0.55rem; color:#888;">SERVICE BEFORE SELF</span>
+                <div class="battalion-grid">
+                    <div class="battalion-item" onclick="saveChoice('ARMY', 'Para SF')">Para SF</div>
+                    <div class="battalion-item" onclick="saveChoice('ARMY', 'Gorkha Rifles')">Gorkha Rifles</div>
+                    <div class="battalion-item" onclick="saveChoice('ARMY', 'Sikh Regt')">Sikh Regt</div>
+                    <div class="battalion-item" onclick="saveChoice('ARMY', 'NSG')">NSG</div>
                 </div>
             </div>
-
-            <div class="force-btn navy-btn" onclick="toggleUnits('navy', this)">
-                <span style="font-weight:900;">INDIAN NAVY</span>
-                <span style="font-size:0.6rem; color:#aaa;">MAY THE LORD OF WATER BE AUSPICIOUS</span>
-                <div id="navy-units" class="battalion-grid">
-                    <div class="battalion-item" onclick="confirmSelection('INDIAN NAVY', 'MARCOS')">MARCOS</div>
-                    <div class="battalion-item" onclick="confirmSelection('INDIAN NAVY', 'Submarine Arm')">SUBMARINES</div>
+            <div class="force-btn navy-btn" onclick="toggleUnits(this)">
+                <span style="font-weight:900; display:block;">INDIAN NAVY</span>
+                <span style="font-size:0.55rem; color:#888;">SHAM NO VARUNAH</span>
+                <div class="battalion-grid">
+                    <div class="battalion-item" onclick="saveChoice('NAVY', 'MARCOS')">MARCOS</div>
+                    <div class="battalion-item" onclick="saveChoice('NAVY', 'Submariners')">Submariners</div>
+                    <div class="battalion-item" onclick="saveChoice('NAVY', 'Fleet Ops')">Fleet Ops</div>
                 </div>
             </div>
-
-            <div class="force-btn airforce-btn" onclick="toggleUnits('airforce', this)">
-                <span style="font-weight:900;">INDIAN AIR FORCE</span>
-                <span style="font-size:0.6rem; color:#aaa;">TOUCH THE SKY WITH GLORY</span>
-                <div id="airforce-units" class="battalion-grid">
-                    <div class="battalion-item" onclick="confirmSelection('INDIAN AIR FORCE', 'Garud Commandos')">GARUD SF</div>
-                    <div class="battalion-item" onclick="confirmSelection('INDIAN AIR FORCE', 'Fighter Wing')">FIGHTER WING</div>
+            <div class="force-btn airforce-btn" onclick="toggleUnits(this)">
+                <span style="font-weight:900; display:block;">INDIAN AIR FORCE</span>
+                <span style="font-size:0.55rem; color:#888;">NABHAH SPRSHAM DIPTHAM</span>
+                <div class="battalion-grid">
+                    <div class="battalion-item" onclick="saveChoice('AIR FORCE', 'Garud SF')">Garud SF</div>
+                    <div class="battalion-item" onclick="saveChoice('AIR FORCE', 'Fighter Wing')">Fighter Wing</div>
+                    <div class="battalion-item" onclick="saveChoice('AIR FORCE', 'Air Defense')">Air Defense</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="neon-card" id="dashboard" style="display:none;">
-        <div id="rank-badge">LIEUTENANT</div>
-        <h3 id="unit-title" style="margin: 10px 0 0; color: var(--saffron); font-size: 0.75rem;">UNIT</h3>
-        <img id="user-photo" src="" alt="Officer">
-        <h2 id="user-name" style="margin: 0; letter-spacing: 1px;">OFFICER</h2>
-        <p id="stats-text" style="font-size: 0.65rem; color: #888; margin-top: 5px;">RECORD: 1 SESSION</p>
-        <button class="finish-btn" onclick="finish()">SALUTE & DISMISS</button>
+    <div id="dashboard">
+        <div class="neon-card">
+            <div id="rank-badge">LIEUTENANT</div>
+            <h3 id="unit-title" style="margin: 10px 0 0; color: var(--saffron); font-size: 0.75rem;">UNIT</h3>
+            <div style="position: relative; width: 100px; height: 100px; margin: 15px auto;">
+                <div class="loader-chakra" style="position: absolute; width: 100%; height: 100%; opacity: 0.2; animation-duration: 10s;"></div>
+                <img id="user-photo" src="" alt="Officer">
+            </div>
+            <h2 id="user-name" style="margin: 0; letter-spacing: 1px;">OFFICER</h2>
+            <p id="stats-text" style="font-size: 0.65rem; color: #888; margin-top: 5px;">SERVICE RECORD: 1 SESSION</p>
+            <button class="finish-btn" onclick="finish()">JAI HIND</button>
+        </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.ready(); tg.expand();
 
-        // 1. Loader Logic
+        // 1. Permanent Check
         window.onload = () => {
-            setTimeout(() => {
-                document.getElementById('loader').style.opacity = '0';
-                setTimeout(() => { document.getElementById('loader').style.display = 'none'; }, 800);
-            }, 1800);
+            const branch = localStorage.getItem('perm_branch');
+            const unit = localStorage.getItem('perm_unit');
+
+            if (branch && unit) {
+                loadDashboard(branch, unit);
+            } else {
+                document.getElementById('force-selection').style.display = 'flex';
+            }
+            
+            setTimeout(() => { document.getElementById('loader').style.display = 'none'; }, 1800);
         };
 
-        // 2. Selection UI
-        function toggleUnits(id, el) {
+        function toggleUnits(el) {
             document.querySelectorAll('.battalion-grid').forEach(g => g.style.display = 'none');
             el.querySelector('.battalion-grid').style.display = 'grid';
             tg.HapticFeedback.impactOccurred('medium');
         }
 
-        function confirmSelection(branch, unit) {
+        // 2. Lock Decision
+        function saveChoice(branch, unit) {
             event.stopPropagation();
+            tg.showConfirm(`Confirm enlistment in ${unit}? This choice is permanent.`, (ok) => {
+                if(ok) {
+                    localStorage.setItem('perm_branch', branch);
+                    localStorage.setItem('perm_unit', unit);
+                    tg.HapticFeedback.notificationOccurred('success');
+                    loadDashboard(branch, unit);
+                }
+            });
+        }
+
+        function loadDashboard(branch, unit) {
             document.getElementById('force-selection').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
             
             let sessions = parseInt(localStorage.getItem('service_record') || "0") + 1;
             updateRank(sessions);
-
-            document.getElementById('unit-title').innerText = `${branch} | ${unit}`;
-            document.getElementById('stats-text').innerText = `SERVICE RECORD: ${sessions} SESSIONS`;
-            tg.HapticFeedback.notificationOccurred('success');
-        }
-
-        // 3. Rank Progression
-        function updateRank(sessions) {
-            let rank = { title: "LIEUTENANT", color: "#87CEEB" };
-            if (sessions >= 10) rank = { title: "GENERAL", color: "#FFD700" };
-            else if (sessions >= 5) rank = { title: "MAJOR", color: "#C0C0C0" };
-            else if (sessions >= 3) rank = { title: "CAPTAIN", color: "#CD7F32" };
             
-            const badge = document.getElementById('rank-badge');
-            badge.innerText = rank.title;
-            badge.style.color = rank.color;
-            badge.style.borderColor = rank.color;
+            document.getElementById('unit-title').innerText = `${branch} • ${unit}`;
+            document.getElementById('stats-text').innerText = `SERVICE RECORD: ${sessions} SESSIONS`;
         }
 
-        // 4. Audio
+        // 3. Rank System
+        function updateRank(sessions) {
+            let r = { t: "LIEUTENANT", c: "#87CEEB" };
+            if (sessions >= 15) r = { t: "FIELD MARSHAL", c: "#FF4500" };
+            else if (sessions >= 10) r = { t: "GENERAL", c: "#FFD700" };
+            else if (sessions >= 5) r = { t: "MAJOR", c: "#C0C0C0" };
+            else if (sessions >= 3) r = { t: "CAPTAIN", c: "#CD7F32" };
+            const b = document.getElementById('rank-badge');
+            b.innerText = r.t; b.style.color = b.style.borderColor = r.c;
+        }
+
+        // 4. Audio Controls
         let playing = false;
         function toggleAudio() {
-            const audio = document.getElementById('bg-music');
-            if (!playing) { audio.play().catch(() => {}); document.getElementById('audioIcon').innerText = "🔊"; }
-            else { audio.pause(); document.getElementById('audioIcon').innerText = "🔇"; }
+            const a = document.getElementById('bg-music');
+            if (!playing) { a.play().catch(()=>{}); document.getElementById('audioIcon').innerText = "🔊"; }
+            else { a.pause(); document.getElementById('audioIcon').innerText = "🔇"; }
             playing = !playing;
             tg.HapticFeedback.impactOccurred('light');
         }
 
-        // 5. User Init
+        // 5. User Profile
         const user = tg.initDataUnsafe?.user;
         if (user) {
-            document.getElementById('user-name').innerText = user.first_name.toUpperCase();
+            document.getElementById('user-name').innerText = (user.first_name || 'Officer').toUpperCase();
             document.getElementById('user-photo').src = user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=FF9933&color=fff`;
         }
 
         function finish() {
-            let sessions = parseInt(localStorage.getItem('service_record') || "0") + 1;
-            localStorage.setItem('service_record', sessions);
-            tg.sendData(`Officer Dismissed: ${document.getElementById('rank-badge').innerText}`);
+            let s = parseInt(localStorage.getItem('service_record') || "0") + 1;
+            localStorage.setItem('service_record', s);
+            tg.sendData("Service Logged");
             tg.close();
         }
     </script>
