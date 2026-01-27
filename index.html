@@ -83,28 +83,21 @@ const COLL_ID = 'users';                 // Aapki "Userr" Collection ID
         }
 
         async function register(unit) {
-            try {
-                const data = { name: USER_NAME, unit: unit, missions: 0 };
-                // Create document in Appwrite
-                await databases.createDocument(DB_ID, COLL_ID, USER_ID, data);
-                location.reload();
-            } catch (e) {
-                alert("Registration Error: " + e.message);
-            }
-        }
+    try {
+        const data = { 
+            name: USER_NAME, // Dashboard mein 'name' hona chahiye
+            unit: unit,      // Dashboard mein 'unit' hona chahiye
+            missions: 0      // Dashboard mein 'missions' (integer) hona chahiye
+        };
+        
+        // Document create command
+        await databases.createDocument(DB_ID, COLL_ID, USER_ID, data);
+        location.reload();
+    } catch (e) {
+        alert("Attribute Error: " + e.message + "\nCheck if attributes are 'Available' in dashboard.");
+    }
+}
 
-        async function updateMissions() {
-            const m = document.getElementById('u-missions');
-            const newCount = parseInt(m.innerText) + 1;
-            try {
-                // Update mission count in background
-                await databases.updateDocument(DB_ID, COLL_ID, USER_ID, { missions: newCount });
-                m.innerText = newCount;
-                tg.HapticFeedback.impactOccurred('light');
-            } catch (e) {
-                console.error("Sync failed");
-            }
-        }
 
         function render(d) {
             document.getElementById('u-name').innerText = d.name.toUpperCase();
