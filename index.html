@@ -12,7 +12,7 @@
         :root { --bg: #000; --saffron: #FF9933; --white: #FFF; --green: #138808; }
         body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; padding: 0; overflow-x: hidden; }
         
-        #init-loader { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; text-align: center; padding: 20px; }
+        #loader { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; text-align: center; padding: 20px; }
         .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top: 4px solid var(--saffron); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
@@ -24,30 +24,26 @@
         .nav { position: fixed; bottom: 0; width: 100%; background: #0a0a0a; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #222; }
         .nav-item { font-size: 0.75rem; color: #555; cursor: pointer; }
         .nav-active { color: var(--saffron); font-weight: bold; }
-
-        .officer-card { display: flex; align-items: center; background: #111; width: 100%; padding: 12px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #222; max-width: 400px;}
-        .officer-card img { width: 45px; height: 45px; border-radius: 50%; margin-right: 12px; }
     </style>
 </head>
 <body>
 
-    <div id="init-loader">
+    <div id="loader">
         <div class="spinner"></div>
-        <p id="loader-text" style="margin-top: 20px; font-size: 0.9rem; color: #888;">INITIALIZING COMMAND...</p>
+        <p id="loader-msg" style="margin-top: 20px; font-size: 0.9rem; color: #888;">CONNECTING TO COMMAND...</p>
     </div>
 
     <div id="screen-select" class="screen">
-        <h2 style="margin-top: 50px;">ENLIST IN SERVICE</h2>
-        <button class="btn" onclick="register('ARMY', 'Para SF')">JOIN ARMY: PARA SF</button>
-        <button class="btn" onclick="register('NAVY', 'MARCOS')">JOIN NAVY: MARCOS</button>
-        <button class="btn" onclick="register('AIR FORCE', 'GARUD')">JOIN AIR FORCE: GARUD</button>
+        <h2 style="margin-top: 50px;">CHOOSE YOUR UNIT</h2>
+        <button class="btn" onclick="register('ARMY')">JOIN ARMY</button>
+        <button class="btn" onclick="register('NAVY')">JOIN NAVY</button>
+        <button class="btn" onclick="register('AIR FORCE')">JOIN AIR FORCE</button>
     </div>
 
     <div id="screen-dash" class="screen">
-        <img id="my-photo" src="" style="width:100px; height:100px; border-radius:50%; border:2px solid white; margin-top:40px;">
-        <h2 id="my-name">OFFICER</h2>
-        <p id="my-unit" style="color:var(--saffron); font-size:0.8rem;"></p>
-        <h1 id="my-missions" style="font-size: 4rem; margin: 0;">0</h1>
+        <h2 id="u-name" style="margin-top:40px;">OFFICER</h2>
+        <p id="u-unit" style="color:var(--saffron);"></p>
+        <h1 id="u-missions" style="font-size: 4rem; margin: 10px 0;">0</h1>
         <button class="btn" onclick="updateMissions()">REPORT DUTY</button>
     </div>
 
@@ -66,93 +62,76 @@
         tg.ready();
         tg.expand();
 
-        // --- PASTE YOUR ACTUAL KEYS HERE ---
+        // --- PASTE YOUR KEYS HERE ---
         const SB_URL = "https://jdqkfjwijcpdnssmniov.supabase.co"; 
-        const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkcWtmandpamNwZG5zc21uaW92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0ODk3ODgsImV4cCI6MjA4NTA2NTc4OH0.Ho0bj_umu8GVXOJXpTEF--8y2emlbbaBKlOPpKqoxEc";
-        // ----------------------------------------------
+        const SB_KEY = " eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkcWtmandpamNwZG5zc21uaW92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0ODk3ODgsImV4cCI6MjA4NTA2NTc4OH0.Ho0bj_umu8GVXOJXpTEF--8y2emlbbaBKlOPpKqoxEc";
+        // ---------------------------------------
 
-        const user = tg.initDataUnsafe?.user || { id: 12345, first_name: "Tester" };
         let supabase;
-        let userData = null;
+        const user = tg.initDataUnsafe?.user || { id: 12345, first_name: "Tester" };
 
         async function init() {
             try {
-                // Initialize Supabase Client
-                supabase = supabase.createClient(SB_URL, SB_KEY);
+                // Proper Initialization for v2 Library
+                if (!window.supabase) throw new Error("Supabase Library not loaded");
+                supabase = window.supabase.createClient(SB_URL, SB_KEY);
                 
-                // Fetch User Data
+                // Connection Test
                 const { data, error } = await supabase.from('officers').select('*').eq('id', user.id).maybeSingle();
                 
                 if (error) throw error;
 
-                document.getElementById('init-loader').style.display = 'none';
-
+                document.getElementById('loader').style.display = 'none';
                 if (data) {
-                    userData = data;
-                    renderUser();
+                    renderUser(data);
                     show('screen-dash');
                 } else {
                     show('screen-select');
                 }
             } catch (err) {
                 console.error(err);
-                document.getElementById('loader-text').style.color = "#ff4444";
-                document.getElementById('loader-text').innerHTML = "<b>CONNECTION ERROR:</b><br>" + err.message + "<br><br>Check Keys & RLS Policies.";
+                document.getElementById('loader-msg').style.color = "red";
+                document.getElementById('loader-msg').innerHTML = "<b>INIT ERROR:</b><br>" + err.message;
             }
         }
 
-        async function register(branch, unit) {
-            const entry = {
-                id: user.id,
-                name: user.first_name,
-                photo: user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=FF9933&color=fff`,
-                branch: branch,
-                unit: unit,
-                missions: 0
-            };
-            const { error } = await supabase.from('officers').insert([entry]);
-            if (!error) {
-                userData = entry;
-                renderUser();
-                show('screen-dash');
-            } else {
-                alert("Error: " + error.message);
-            }
+        async function register(branch) {
+            const { error } = await supabase.from('officers').insert([{ 
+                id: user.id, 
+                name: user.first_name, 
+                branch: branch, 
+                missions: 0 
+            }]);
+            
+            if (!error) location.reload();
+            else alert("Registration Error: " + error.message);
         }
 
         async function updateMissions() {
-            // Update via RPC function
             const { error } = await supabase.rpc('increment_missions', { user_id: user.id });
             if (!error) {
-                userData.missions++;
-                renderUser();
+                const m = document.getElementById('u-missions');
+                m.innerText = parseInt(m.innerText) + 1;
                 tg.HapticFeedback.impactOccurred('medium');
             }
         }
 
-        function renderUser() {
-            document.getElementById('my-name').innerText = userData.name.toUpperCase();
-            document.getElementById('my-unit').innerText = userData.branch + " • " + userData.unit;
-            document.getElementById('my-missions').innerText = userData.missions;
-            document.getElementById('my-photo').src = userData.photo;
+        function renderUser(d) {
+            document.getElementById('u-name').innerText = d.name.toUpperCase();
+            document.getElementById('u-unit').innerText = d.branch;
+            document.getElementById('u-missions').innerText = d.missions;
         }
 
         async function loadRoster() {
-            const { data, error } = await supabase.from('officers').select('*').order('missions', { ascending: false }).limit(20);
+            const { data } = await supabase.from('officers').select('*').order('missions', { ascending: false }).limit(20);
             const list = document.getElementById('roster-list');
             list.innerHTML = "";
             if(data) {
                 data.forEach(off => {
-                    list.innerHTML += `
-                        <div class="officer-card">
-                            <img src="${off.photo}">
-                            <div style="flex:1">
-                                <div style="font-weight:bold; font-size:0.9rem;">${off.name}</div>
-                                <div style="font-size:0.65rem; color:var(--saffron);">${off.branch} • ${off.unit}</div>
-                            </div>
-                            <div style="font-weight:bold; color:var(--green);">${off.missions}</div>
-                        </div>
-                    `;
+                    list.innerHTML += `<div style="padding:10px; border-bottom:1px solid #222; width:100%; display:flex; justify-content:space-between;">
+                        <span>${off.name} (${off.branch})</span>
+                        <span style="color:var(--green)">${off.missions}</span>
+                    </div>`;
                 });
             }
         }
@@ -161,11 +140,7 @@
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('nav-active'));
-            if(id === 'screen-dash') document.getElementById('n-dash').classList.add('nav-active');
-            if(id === 'screen-roster') {
-                document.getElementById('n-roster').classList.add('nav-active');
-                loadRoster();
-            }
+            if(id === 'screen-roster') loadRoster();
         }
 
         window.onload = init;
