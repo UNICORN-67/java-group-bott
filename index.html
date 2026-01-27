@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexus Tiranga Pro</title>
+    <title>Nexus Tiranga Hub Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -16,19 +16,48 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             background-color: var(--bg-color);
-            color: white;
             margin: 0;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
             overflow: hidden;
+            color: white;
         }
 
-        /* --- Falling Petals --- */
+        /* --- LOADER SCREEN --- */
+        #loader {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.8s ease, visibility 0.8s;
+        }
+
+        .loader-chakra {
+            width: 100px;
+            height: 100px;
+            border: 2px solid var(--blue);
+            border-radius: 50%;
+            position: relative;
+            animation: spin 3s linear infinite;
+        }
+
+        .loader-chakra::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-conic-gradient(transparent 0deg 14deg, var(--blue) 14deg 15deg);
+            border-radius: 50%;
+        }
+
+        /* --- BACKGROUND PETALS --- */
         .petal {
             position: absolute;
             top: -10%;
@@ -37,128 +66,54 @@
             pointer-events: none;
             animation: fall linear infinite;
         }
-        @keyframes fall {
-            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
-            100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
-        }
 
-        /* --- Audio Toggle Button --- */
-        .audio-toggle {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 45px;
-            height: 45px;
-            background: var(--card-bg);
-            border: 1px solid var(--white);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            z-index: 100;
-            transition: 0.3s;
-        }
-        .playing {
-            border-color: var(--saffron);
-            box-shadow: 0 0 15px var(--saffron);
-            animation: pulse-audio 1.5s infinite;
-        }
-        @keyframes pulse-audio {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-
-        /* --- Neon Card --- */
+        /* --- MAIN CARD --- */
         .neon-card {
             position: relative;
-            width: 320px;
+            width: 310px;
             padding: 30px 20px;
             background: var(--card-bg);
             border-radius: 24px;
             text-align: center;
             z-index: 10;
         }
+
         .neon-card::before {
-            content: '';
-            position: absolute;
-            top: -3px; left: -3px; right: -3px; bottom: -3px;
+            content: ''; position: absolute; top: -3px; left: -3px; right: -3px; bottom: -3px;
             background: linear-gradient(45deg, var(--saffron), var(--white), var(--green), var(--saffron));
-            background-size: 400%;
-            z-index: -1;
-            border-radius: 27px;
-            animation: flag-flow 8s linear infinite;
-            filter: blur(12px);
-        }
-        @keyframes flag-flow {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 400% 50%; }
+            background-size: 400%; z-index: -1; border-radius: 27px; animation: flag-flow 8s linear infinite; filter: blur(12px);
         }
 
-        /* --- Dashboard UI --- */
-        .clock {
-            font-size: 0.85rem;
-            color: var(--saffron);
-            font-weight: bold;
-            margin-bottom: 15px;
-            letter-spacing: 2px;
+        /* Audio Toggle */
+        .audio-toggle {
+            position: absolute; top: 20px; right: 20px; width: 40px; height: 40px;
+            background: var(--card-bg); border: 1px solid var(--white); border-radius: 50%;
+            display: flex; justify-content: center; align-items: center; cursor: pointer; z-index: 100;
         }
 
-        .chakra-container {
-            position: relative;
-            width: 110px; height: 110px;
-            margin: 0 auto 15px;
-            display: flex; justify-content: center; align-items: center;
+        .playing { border-color: var(--saffron); box-shadow: 0 0 10px var(--saffron); }
+
+        /* Buttons */
+        .btn {
+            width: 100%; padding: 14px; border-radius: 12px; font-weight: 900; 
+            cursor: pointer; border: none; margin-top: 10px; transition: 0.2s;
         }
-        .ashoka-chakra {
-            position: absolute;
-            width: 100%; height: 100%;
-            border: 1px solid var(--blue);
-            border-radius: 50%;
-            animation: spin 15s linear infinite;
-            opacity: 0.4;
-        }
-        .ashoka-chakra::before {
-            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: repeating-conic-gradient(transparent 0deg 14deg, var(--blue) 14deg 15deg);
-            border-radius: 50%;
-        }
+
+        .share-btn { background: transparent; color: white; border: 1px solid white; }
+        .start-btn { background: linear-gradient(90deg, var(--saffron), var(--white), var(--green)); color: black; }
+
+        /* Animations */
+        @keyframes flag-flow { 0% { background-position: 0% 50%; } 100% { background-position: 400% 50%; } }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-        #user-photo {
-            width: 80px; height: 80px;
-            border-radius: 50%; border: 2px solid white;
-            z-index: 2; object-fit: cover;
-        }
-
-        .progress-container {
-            width: 100%; background: #222; height: 6px;
-            border-radius: 10px; margin: 20px 0; overflow: hidden;
-        }
-        #p-fill {
-            width: 0%; height: 100%;
-            background: linear-gradient(90deg, var(--saffron), var(--green));
-            transition: 2s ease-in-out;
-        }
-
-        .start-btn {
-            background: linear-gradient(90deg, var(--saffron), var(--white), var(--green));
-            color: black; border: none; width: 100%; padding: 16px;
-            border-radius: 12px; font-weight: 900; font-size: 1rem;
-            cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-
-        #toast {
-            visibility: hidden; min-width: 220px; background: white; color: var(--blue);
-            padding: 12px; position: fixed; bottom: 30px; border-radius: 50px;
-            font-weight: bold; z-index: 200; text-align: center;
-        }
-        #toast.show { visibility: visible; animation: slideUp 0.5s; }
-        @keyframes slideUp { from { bottom: -50px; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+        @keyframes fall { 0% { transform: translateY(0) rotate(0deg); opacity: 0; } 100% { transform: translateY(110vh) rotate(360deg); opacity: 0; } }
     </style>
 </head>
 <body>
+
+    <div id="loader">
+        <div class="loader-chakra"></div>
+        <p style="margin-top: 20px; letter-spacing: 2px;">JAI HIND...</p>
+    </div>
 
     <audio id="bg-music" loop>
         <source src="vande_mataram.mp3" type="audio/mpeg">
@@ -169,24 +124,20 @@
     </div>
 
     <div id="petal-container"></div>
-    <div id="toast">JAI HIND! 🇮🇳</div>
 
     <div class="neon-card">
-        <div class="clock" id="live-clock">00:00:00 AM</div>
-
-        <div class="chakra-container">
-            <div class="ashoka-chakra"></div>
-            <img id="user-photo" src="https://ui-avatars.com/api/?name=User" alt="User">
-        </div>
+        <div id="live-clock" style="color: var(--saffron); font-size: 0.8rem; margin-bottom: 10px;">00:00:00</div>
         
-        <div id="user-name" style="font-weight: 900; font-size: 1.5rem;">GUEST</div>
-        <div style="font-size: 0.7rem; color: #888;">CITIZEN ID: <span id="user-id-val">00000000</span></div>
-
-        <div class="progress-container">
-            <div id="p-fill"></div>
+        <div style="position: relative; width: 100px; height: 100px; margin: 0 auto 15px;">
+            <div class="loader-chakra" style="position: absolute; width: 100%; height: 100%; opacity: 0.3;"></div>
+            <img id="user-photo" src="https://ui-avatars.com/api/?name=User" style="width: 80px; height: 80px; border-radius: 50%; border: 2px solid white; margin-top: 10px;">
         </div>
-        
-        <button class="start-btn" id="startBtn">START SESSION</button>
+
+        <h2 id="user-name" style="margin: 5px 0;">GUEST</h2>
+        <p style="font-size: 0.7rem; color: #888; margin-bottom: 20px;">CITIZEN ID: <span id="user-id-val">00000000</span></p>
+
+        <button class="btn share-btn" id="shareBtn">📤 SHARE PROFILE</button>
+        <button class="btn start-btn" id="startBtn">START SESSION</button>
     </div>
 
     <script>
@@ -194,44 +145,34 @@
         tg.ready();
         tg.expand();
 
-        // 1. Audio Control
+        // 1. Loader Handle
+        window.onload = () => {
+            setTimeout(() => {
+                document.getElementById('loader').style.opacity = '0';
+                setTimeout(() => { document.getElementById('loader').style.display = 'none'; }, 800);
+            }, 1500);
+        };
+
+        // 2. Audio Control
         const audio = document.getElementById('bg-music');
-        const audioToggle = document.getElementById('audioToggle');
-        const audioIcon = document.getElementById('audioIcon');
-        let isPlaying = false;
+        const audioBtn = document.getElementById('audioToggle');
+        let playing = false;
 
-        audioToggle.addEventListener('click', () => {
-            if (isPlaying) {
-                audio.pause();
-                audioIcon.innerText = "🔇";
-                audioToggle.classList.remove('playing');
+        audioBtn.onclick = () => {
+            if (!playing) {
+                audio.play().catch(() => alert("Add vande_mataram.mp3 to folder!"));
+                document.getElementById('audioIcon').innerText = "🔊";
+                audioBtn.classList.add('playing');
             } else {
-                audio.play().catch(() => alert("Error: Make sure 'vande_mataram.mp3' is in the project folder!"));
-                audioIcon.innerText = "🔊";
-                audioToggle.classList.add('playing');
+                audio.pause();
+                document.getElementById('audioIcon').innerText = "🔇";
+                audioBtn.classList.remove('playing');
             }
-            isPlaying = !isPlaying;
+            playing = !playing;
             tg.HapticFeedback.impactOccurred('light');
-        });
+        };
 
-        // 2. Live Clock & Animations
-        setInterval(() => {
-            document.getElementById('live-clock').innerText = new Date().toLocaleTimeString('en-IN');
-        }, 1000);
-
-        setTimeout(() => { document.getElementById('p-fill').style.width = '100%'; }, 500);
-
-        function createPetal() {
-            const p = document.createElement('div');
-            p.className = 'petal';
-            const colors = ['#FF9933', '#138808'];
-            p.style.cssText = `width:10px; height:10px; left:${Math.random()*100}vw; background:${colors[Math.floor(Math.random()*2)]}; animation-duration:${Math.random()*3+4}s;`;
-            document.getElementById('petal-container').appendChild(p);
-            setTimeout(() => p.remove(), 6000);
-        }
-        setInterval(createPetal, 400);
-
-        // 3. Populate User Data
+        // 3. User Data
         const user = tg.initDataUnsafe?.user;
         if (user) {
             document.getElementById('user-name').innerText = user.first_name.toUpperCase();
@@ -239,15 +180,29 @@
             document.getElementById('user-photo').src = user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=FF9933&color=fff`;
         }
 
-        // 4. Action Button
-        document.getElementById('startBtn').addEventListener('click', () => {
+        // 4. Petals
+        function createPetal() {
+            const p = document.createElement('div');
+            p.className = 'petal';
+            p.style.cssText = `width:10px; height:10px; left:${Math.random()*100}vw; background:${Math.random()>0.5?'#FF9933':'#138808'}; animation-duration:${Math.random()*3+4}s;`;
+            document.getElementById('petal-container').appendChild(p);
+            setTimeout(() => p.remove(), 6000);
+        }
+        setInterval(createPetal, 400);
+
+        // 5. Buttons
+        document.getElementById('shareBtn').onclick = () => {
+            tg.switchInlineQuery("Check out my Patriotic Profile on Nexus Hub! 🇮🇳", ['users', 'groups']);
+        };
+
+        document.getElementById('startBtn').onclick = () => {
             tg.HapticFeedback.notificationOccurred('success');
-            document.getElementById('toast').className = "show";
-            setTimeout(() => {
-                tg.sendData(`Tiranga Active: ${user?.first_name || 'User'}`);
-                tg.close();
-            }, 1200);
-        });
+            tg.sendData(`Session: ${user?.first_name || 'User'}`);
+            tg.close();
+        };
+
+        setInterval(() => { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }, 1000);
     </script>
 </body>
 </html>
+
