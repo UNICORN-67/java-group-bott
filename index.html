@@ -3,52 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexus Tiranga: Battleground</title>
+    <title>Nexus Tiranga: RPG Battle</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/appwrite@13.0.1"></script>
-
     <style>
-        :root { --bg: #000; --saffron: #FF9933; --white: #FFF; --green: #138808; --red: #ff4444; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; padding: 0; }
-        
-        #loader { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top: 4px solid var(--saffron); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        .screen { display: none; padding: 20px; flex-direction: column; align-items: center; min-height: 100vh; text-align: center; }
+        :root { --bg: #050505; --saffron: #FF9933; --green: #138808; --gold: #FFD700; --red: #ff4d4d; }
+        body { font-family: 'Courier New', monospace; background: var(--bg); color: #fff; margin: 0; padding: 0; overflow-x: hidden; }
+        .screen { display: none; padding: 15px; flex-direction: column; align-items: center; min-height: 100vh; box-sizing: border-box; }
         .active { display: flex; }
         
-        .btn { padding: 15px; width: 100%; max-width: 300px; border-radius: 12px; border: none; font-weight: bold; background: linear-gradient(90deg, var(--saffron), var(--white), var(--green)); color: #000; margin-top: 10px; cursor: pointer; text-transform: uppercase; }
-        .btn-kill { background: var(--red); color: white; padding: 5px 10px; font-size: 10px; border-radius: 5px; width: auto; margin: 0; }
+        /* UI Bars */
+        .card { background: #111; border: 1px solid #333; border-radius: 12px; width: 100%; max-width: 350px; padding: 15px; margin: 10px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .stat-bar { width: 100%; background: #222; border-radius: 5px; margin: 5px 0; height: 12px; overflow: hidden; border: 1px solid #444; }
+        .fill-health { height: 100%; background: linear-gradient(90deg, #8b0000, var(--red)); transition: 0.5s; }
+        .fill-exp { height: 100%; background: linear-gradient(90deg, #004488, #0088ff); transition: 0.5s; }
         
-        .lb-card { background: #111; width: 100%; max-width: 350px; border-radius: 15px; padding: 10px; margin-top: 20px; border: 1px solid #333; }
-        .lb-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #222; }
+        .btn { padding: 15px; width: 100%; max-width: 320px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin: 8px 0; text-transform: uppercase; font-family: 'Courier New'; }
+        .btn-main { background: linear-gradient(45deg, var(--saffron), var(--white), var(--green)); color: #000; box-shadow: 0 0 10px rgba(255,153,51,0.3); }
+        .btn-shop { background: var(--gold); color: #000; }
+        .btn-kill { background: var(--red); color: white; padding: 5px 10px; font-size: 11px; width: auto; }
+        
+        .lb-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #222; width: 100%; }
     </style>
 </head>
 <body>
 
-    <div id="loader"><div class="spinner"></div><p id="load-text">CONNECTING...</p></div>
-
-    <div id="screen-select" class="screen">
-        <h1 style="color: var(--saffron);">SELECT UNIT</h1>
-        <button class="btn" onclick="register('ARMY')">ARMY</button>
-        <button class="btn" onclick="register('NAVY')">NAVY</button>
-        <button class="btn" onclick="register('AIR FORCE')">AIR FORCE</button>
+    <div id="loader" style="position:fixed; inset:0; background:#000; z-index:999; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+        <div style="width:40px; height:40px; border:4px solid #333; border-top:4px solid var(--saffron); border-radius:50%; animation:spin 1s linear infinite;"></div>
+        <p>LOADING BATTLESTATION...</p>
     </div>
 
     <div id="screen-dash" class="screen">
-        <h2 id="u-name">OFFICER</h2>
-        <p id="u-unit" style="color: var(--saffron);"></p>
-        <div style="padding: 30px; border: 3px solid var(--green); border-radius: 50%; margin: 20px 0;">
-            <h1 id="u-missions" style="font-size: 3rem; margin: 0;">0</h1>
+        <h2 id="u-name" style="margin: 0; color: var(--saffron);">OFFICER</h2>
+        <p id="u-unit" style="margin: 5px; font-size: 12px; opacity: 0.7;"></p>
+
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:5px;">
+                <span>HEALTH: <span id="val-hp">100</span>/100</span>
+                <span>LEVEL: <span id="val-lvl">1</span></span>
+            </div>
+            <div class="stat-bar"><div id="bar-hp" class="fill-health" style="width: 100%;"></div></div>
+            
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin: 10px 0 5px 0;">
+                <span>EXP: <span id="val-exp">0</span></span>
+                <span>ARMOR: <span id="val-arm">0</span></span>
+            </div>
+            <div class="stat-bar"><div id="bar-exp" class="fill-exp" style="width: 0%;"></div></div>
+            
+            <div style="margin-top:15px; font-size:22px; color: var(--gold); font-weight: bold;">₹ <span id="val-rupee">0</span></div>
         </div>
-        <button class="btn" onclick="updateMissions()">REPORT DUTY (+1)</button>
-        <button class="btn" style="background:#222; color:#fff;" onclick="loadLeaderboard()">BATTLEGROUND (RANK)</button>
+
+        <button class="btn btn-main" onclick="train()">TRAIN & PATROL (+EXP & ₹)</button>
+        <button class="btn" style="background:#222; color:#fff; border: 1px solid #444;" onclick="loadLeaderboard()">BATTLE ZONE (RANKINGS)</button>
+        <button class="btn btn-shop" onclick="show('screen-shop')">ARMOURY (SHOP)</button>
     </div>
 
     <div id="screen-leaderboard" class="screen">
-        <h2 style="color: var(--saffron);">TOP OFFICERS</h2>
-        <div id="leaderboard-list" class="lb-card"></div>
+        <h2 style="color: var(--saffron);">BATTLE ZONE</h2>
+        <div id="leaderboard-list" class="card" style="padding: 5px;"></div>
+        <button class="btn" style="background:#222; color:#fff;" onclick="show('screen-dash')">BACK TO BASE</button>
+    </div>
+
+    <div id="screen-shop" class="screen">
+        <h2 style="color: var(--gold);">ARMOURY</h2>
+        <div class="card">
+            <h3>🛡️ Kevlar Vest</h3>
+            <p style="font-size:12px; color:#aaa;">Reduces incoming damage.<br>Defense: +10 | Price: ₹500</p>
+            <button class="btn btn-main" onclick="buyItem('Kevlar', 500, 10, 0)">BUY ARMOR</button>
+        </div>
+        <div class="card">
+            <h3>💉 First Aid Kit</h3>
+            <p style="font-size:12px; color:#aaa;">Instant field repair.<br>Heal: +50 HP | Price: ₹200</p>
+            <button class="btn btn-main" onclick="buyItem('Medkit', 200, 0, 50)">BUY MEDKIT</button>
+        </div>
         <button class="btn" style="background:#222; color:#fff;" onclick="show('screen-dash')">BACK</button>
     </div>
 
@@ -57,53 +84,53 @@
         const tg = window.Telegram.WebApp;
         tg.ready();
 
-        const client = new Client()
-    .setEndpoint('https://fra.cloud.appwrite.io/v1')
-    .setProject('697874190033c5037d47'); // Aapki Project ID
+        const client = new Client().setEndpoint('https://fra.cloud.appwrite.io/v1').setProject('697874190033c5037d47');
+        const databases = new Databases(client);
+        const DB_ID = '6978749b001103ca1fdf', COLL_ID = 'userr';
+        const USER_ID = tg.initDataUnsafe?.user?.id?.toString() || "users";
 
-const databases = new Databases(client);
-const DB_ID = '6978749b001103ca1fdf';    // "Helloo" Database ID
-const COLL_ID = 'users';                 // Aapki "Userr" Collection ID
-// ---------------------------------------------------
-        const USER_ID = tg.initDataUnsafe?.user?.id?.toString() || "tester_123";
-        const USER_NAME = tg.initDataUnsafe?.user?.first_name || "OFFICER";
+        let userLocal = {};
 
         async function init() {
             try {
-                const doc = await databases.getDocument(DB_ID, COLL_ID, USER_ID);
-                render(doc);
+                userLocal = await databases.getDocument(DB_ID, COLL_ID, USER_ID);
+                updateUI();
                 show('screen-dash');
-            } catch (err) { show('screen-select'); }
-            finally { document.getElementById('loader').style.display = 'none'; }
+            } catch (e) { alert("Registration required!"); }
+            document.getElementById('loader').style.display = 'none';
         }
 
-        async function register(unit) {
-            try {
-                await databases.createDocument(DB_ID, COLL_ID, USER_ID, { name: USER_NAME, unit: unit, missions: 0 });
-                location.reload();
-            } catch (e) { alert("Setup Columns first: name, unit, missions"); }
+        function updateUI() {
+            document.getElementById('u-name').innerText = userLocal.name.toUpperCase();
+            document.getElementById('u-unit').innerText = userLocal.unit + " COMMANDO";
+            document.getElementById('val-hp').innerText = userLocal.health;
+            document.getElementById('val-exp').innerText = userLocal.exp;
+            document.getElementById('val-rupee').innerText = userLocal.rupee;
+            document.getElementById('val-arm').innerText = userLocal.armor || 0;
+            document.getElementById('val-lvl').innerText = Math.floor(userLocal.exp / 100) + 1;
+            
+            document.getElementById('bar-hp').style.width = userLocal.health + "%";
+            document.getElementById('bar-exp').style.width = (userLocal.exp % 100) + "%";
         }
 
-        async function updateMissions() {
-            const m = document.getElementById('u-missions');
-            const newCount = parseInt(m.innerText) + 1;
-            m.innerText = newCount;
-            tg.HapticFeedback.impactOccurred('medium');
-            try { await databases.updateDocument(DB_ID, COLL_ID, USER_ID, { missions: newCount }); } catch (e) {}
+        async function train() {
+            tg.HapticFeedback.impactOccurred('light');
+            userLocal.exp += 15;
+            userLocal.rupee += 40;
+            updateUI();
+            try { await databases.updateDocument(DB_ID, COLL_ID, USER_ID, { exp: userLocal.exp, rupee: userLocal.rupee }); } catch(e){}
         }
 
         async function loadLeaderboard() {
             document.getElementById('loader').style.display = 'flex';
             try {
                 const res = await databases.listDocuments(DB_ID, COLL_ID);
-                let users = res.documents.sort((a,b) => b.missions - a.missions);
                 let html = "";
-                users.forEach((u, i) => {
+                res.documents.sort((a,b) => b.exp - a.exp).forEach((u, i) => {
                     html += `<div class="lb-row">
-                        <div style="text-align:left;"><b>#${i+1} ${u.name}</b><br><small>${u.unit}</small></div>
+                        <div style="text-align:left;"><small>#${i+1}</small> <b>${u.name}</b><br><small>HP: ${u.health} | LVL: ${Math.floor(u.exp/100)+1}</small></div>
                         <div>
-                            <span style="color:var(--saffron); font-weight:bold; margin-right:10px;">${u.missions}</span>
-                            ${u.$id !== USER_ID ? `<button class="btn-kill" onclick="killUser('${u.$id}','${u.name}')">KILL</button>` : ''}
+                            ${u.$id !== USER_ID ? `<button class="btn btn-kill" onclick="attackUser('${u.$id}','${u.name}')">ATTACK</button>` : '<b style="color:var(--green)">YOU</b>'}
                         </div>
                     </div>`;
                 });
@@ -113,27 +140,43 @@ const COLL_ID = 'users';                 // Aapki "Userr" Collection ID
             finally { document.getElementById('loader').style.display = 'none'; }
         }
 
-        async function killUser(tId, tName) {
-            tg.HapticFeedback.notificationOccurred('warning');
-            if(!confirm(`Attack ${tName}? You gain 5, they lose 5.`)) return;
+        async function attackUser(tId, tName) {
+            if(userLocal.health <= 10) return alert("Low Health! Heal first.");
             
             document.getElementById('loader').style.display = 'flex';
             try {
                 const victim = await databases.getDocument(DB_ID, COLL_ID, tId);
-                const attacker = await databases.getDocument(DB_ID, COLL_ID, USER_ID);
                 
-                await databases.updateDocument(DB_ID, COLL_ID, tId, { missions: Math.max(0, victim.missions - 5) });
-                await databases.updateDocument(DB_ID, COLL_ID, USER_ID, { missions: attacker.missions + 5 });
+                // Critical Hit Chance (20%)
+                let isCrit = Math.random() < 0.2;
+                let damage = isCrit ? 20 : 10;
                 
-                alert("Target Neutralized! +5 Missions.");
+                // Armor Reduction
+                let finalDamage = Math.max(2, damage - (victim.armor / 5));
+                let newVictimHp = Math.max(0, victim.health - finalDamage);
+                
+                await databases.updateDocument(DB_ID, COLL_ID, tId, { health: newVictimHp });
+                
+                // Attacker Rewards
+                userLocal.exp += 25;
+                userLocal.rupee += 100;
+                updateUI();
+                await databases.updateDocument(DB_ID, COLL_ID, USER_ID, { exp: userLocal.exp, rupee: userLocal.rupee });
+                
+                alert(`${isCrit ? 'CRITICAL HIT! ' : ''}You dealt ${finalDamage.toFixed(0)} damage to ${tName}! Gained ₹100.`);
                 loadLeaderboard();
-            } catch (e) { alert("Combat Error: Permissions check karein!"); }
+            } catch (e) { alert("Combat Error: " + e.message); }
+            finally { document.getElementById('loader').style.display = 'none'; }
         }
 
-        function render(d) {
-            document.getElementById('u-name').innerText = d.name.toUpperCase();
-            document.getElementById('u-unit').innerText = d.unit;
-            document.getElementById('u-missions').innerText = d.missions;
+        async function buyItem(name, price, def, heal) {
+            if(userLocal.rupee < price) return alert("Inadequate Funds!");
+            userLocal.rupee -= price;
+            userLocal.armor += def;
+            userLocal.health = Math.min(100, userLocal.health + heal);
+            updateUI();
+            await databases.updateDocument(DB_ID, COLL_ID, USER_ID, { rupee: userLocal.rupee, armor: userLocal.armor, health: userLocal.health });
+            alert(name + " Equipped!");
         }
 
         function show(id) {
