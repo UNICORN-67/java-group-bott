@@ -3,89 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nexus Tiranga: Supabase Elite</title>
+    <title>Nexus Tiranga</title>
+    
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        :root { --bg: #050505; --saffron: #FF9933; --white: #FFF; --green: #138808; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; padding-bottom: 80px; overflow-x: hidden; }
-        .screen { display: none; padding: 20px; flex-direction: column; align-items: center; min-height: 100vh; }
-        .active { display: flex; }
-        
-        /* Glassmorphism Cards */
-        .officer-card {
-            display: flex; align-items: center; background: rgba(255,255,255,0.03); 
-            width: 100%; max-width: 350px; padding: 15px; margin: 8px 0;
-            border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);
-        }
-        .officer-card img { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--saffron); margin-right: 15px; }
-        .info { flex: 1; }
-        .name { font-weight: bold; font-size: 1rem; }
-        .unit-tag { font-size: 0.7rem; color: var(--saffron); text-transform: uppercase; letter-spacing: 1px; }
-        .score { font-weight: 900; color: var(--green); font-size: 1.2rem; }
 
-        /* Navigation */
-        .nav { position: fixed; bottom: 0; width: 100%; background: #111; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #333; z-index: 100; }
-        .nav-btn { font-size: 0.8rem; opacity: 0.6; cursor: pointer; text-align: center; }
-        .nav-btn.active-nav { opacity: 1; color: var(--saffron); font-weight: bold; }
+    <style>
+        :root { --bg: #000; --saffron: #FF9933; --white: #FFF; --green: #138808; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
         
-        .btn { padding: 16px; width: 100%; max-width: 300px; border-radius: 12px; border: none; font-weight: bold; background: linear-gradient(90deg, var(--saffron), var(--white), var(--green)); color: #000; cursor: pointer; }
+        #status-overlay { position: fixed; inset: 0; background: #000; display: flex; justify-content: center; align-items: center; z-index: 9999; }
+        .screen { display: none; padding: 20px; flex-direction: column; align-items: center; flex: 1; }
+        .active { display: flex; }
+
+        /* Dashboard UI */
+        .rank-badge { color: gold; border: 1px solid gold; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; margin-top: 40px; }
+        .profile-img { width: 100px; height: 100px; border-radius: 50%; border: 3px solid white; margin: 20px 0; background: #222; }
+        .mission-count { font-size: 3.5rem; font-weight: 900; margin: 0; background: linear-gradient(to bottom, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        /* Roster UI */
+        .roster-card { display: flex; align-items: center; background: #111; width: 100%; max-width: 350px; padding: 12px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #222; }
+        .roster-card img { width: 40px; height: 40px; border-radius: 50%; margin-right: 12px; }
+        
+        /* Buttons & Nav */
+        .btn { padding: 16px; width: 100%; max-width: 300px; border-radius: 12px; border: none; font-weight: bold; background: linear-gradient(90deg, var(--saffron), var(--white), var(--green)); color: #000; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
+        .nav { position: fixed; bottom: 0; width: 100%; background: #0a0a0a; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #222; }
+        .nav-item { font-size: 0.7rem; color: #555; transition: 0.3s; }
+        .nav-active { color: var(--saffron); transform: scale(1.1); }
     </style>
 </head>
 <body>
 
+    <div id="status-overlay">COMMAND INITIALIZING...</div>
+
     <div id="screen-select" class="screen">
-        <h2 style="margin-top: 50px; letter-spacing: 2px;">ENLIST IN SERVICE</h2>
-        <p style="color: #888; font-size: 0.8rem;">CHOOSE YOUR PERMANENT BATTALION</p>
-        <button class="btn" style="margin-top:20px;" onclick="register('ARMY', 'Para SF')">JOIN ARMY (PARA SF)</button>
-        <button class="btn" style="margin-top:10px;" onclick="register('NAVY', 'MARCOS')">JOIN NAVY (MARCOS)</button>
-        <button class="btn" style="margin-top:10px;" onclick="register('AIR FORCE', 'GARUD')">JOIN AIR FORCE (GARUD)</button>
+        <h2 style="margin-top: 60px;">ENLIST FOR SERVICE</h2>
+        <p style="color: #666; font-size: 0.8rem; margin-bottom: 30px;">CHOOSE YOUR UNIT PERMANENTLY</p>
+        <button class="btn" onclick="register('ARMY', 'Para SF')">JOIN ARMY: PARA SF</button>
+        <button class="btn" style="margin-top:12px;" onclick="register('NAVY', 'MARCOS')">JOIN NAVY: MARCOS</button>
+        <button class="btn" style="margin-top:12px;" onclick="register('AIR FORCE', 'GARUD')">JOIN AIR FORCE: GARUD</button>
     </div>
 
     <div id="screen-dash" class="screen">
-        <h3 id="rank-name" style="color:gold; border:1px solid gold; padding:5px 15px; border-radius:20px; font-size:0.7rem;">LIEUTENANT</h3>
-        <img id="my-photo" src="" style="width:100px; height:100px; border-radius:50%; border:3px solid white; margin: 20px 0;">
+        <div id="rank-display" class="rank-badge">LIEUTENANT</div>
+        <img id="my-photo" class="profile-img" src="">
         <h2 id="my-name" style="margin:0;">OFFICER</h2>
-        <p id="my-unit" style="color:var(--saffron); margin-bottom: 30px;"></p>
-        <button class="btn" onclick="updateMissions()">REPORT FOR DUTY</button>
+        <p id="my-unit" style="color:var(--saffron); font-size: 0.8rem;"></p>
+        <h1 id="my-missions" class="mission-count">0</h1>
+        <p style="color:#555; font-size: 0.7rem; margin-top: -5px;">MISSIONS COMPLETED</p>
+        <button class="btn" style="margin-top: 30px;" onclick="updateMissions()">REPORT FOR DUTY</button>
     </div>
 
     <div id="screen-roster" class="screen">
-        <h2 style="letter-spacing: 2px;">LIVE BATTALION</h2>
-        <div id="roster-container" style="width:100%; display:flex; flex-direction:column; align-items:center;">
-            </div>
+        <h2 style="margin-top: 20px;">BATTALION ROSTER</h2>
+        <div id="roster-list" style="width:100%; display:flex; flex-direction:column; align-items:center; padding-bottom: 100px;"></div>
     </div>
 
     <div class="nav">
-        <div class="nav-btn active-nav" id="n-dash" onclick="show('screen-dash')">🏠 BASE</div>
-        <div class="nav-btn" id="n-roster" onclick="show('screen-roster')">🎖️ ROSTER</div>
+        <div class="nav-item nav-active" id="btn-dash" onclick="show('screen-dash')">BASE</div>
+        <div class="nav-item" id="btn-roster" onclick="show('screen-roster')">ROSTER</div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.ready();
+        tg.ready(); tg.expand();
 
-        // REPLACE THESE WITH YOUR SUPABASE KEYS
-        const SB_URL = "https://jdqkfjwijcpdnssmniov.supabase.co";
+        // --- PASTE YOUR KEYS HERE ---
+        const SB_URL = "https://jdqkfjwijcpdnssmniov.supabase.co"; 
         const SB_KEY = "sb_publishable_IiBbaB2MksFIeosGpneqxA_Cmqmi4Am";
-        const supabase = exports.supabasejs.createClient(SB_URL, SB_KEY);
+        // ----------------------------
 
-        const user = tg.initDataUnsafe?.user || { id: 12345, first_name: "Local_Test", photo_url: "" };
-        let myData = null;
+        let supabase;
+        try {
+            supabase = supabase.createClient(SB_URL, SB_KEY);
+        } catch(e) { console.error("Client Init Error"); }
 
-        async function checkUser() {
-            const { data, error } = await supabase.from('officers').select('*').eq('id', user.id).single();
-            if (data) {
-                myData = data;
-                renderDash();
-                show('screen-dash');
-            } else {
-                show('screen-select');
+        const user = tg.initDataUnsafe?.user || { id: 101, first_name: "Local_Officer" };
+        let userData = null;
+
+        async function init() {
+            try {
+                const { data, error } = await supabase.from('officers').select('*').eq('id', user.id).single();
+                document.getElementById('status-overlay').style.display = 'none';
+                if (data) {
+                    userData = data;
+                    renderUser();
+                    show('screen-dash');
+                } else {
+                    show('screen-select');
+                }
+            } catch (err) {
+                document.getElementById('status-overlay').innerText = "DB CONNECTION ERROR";
             }
         }
 
         async function register(branch, unit) {
-            const newUser = {
+            const entry = {
                 id: user.id,
                 name: user.first_name,
                 photo: user.photo_url || `https://ui-avatars.com/api/?name=${user.first_name}&background=FF9933&color=fff`,
@@ -93,47 +106,50 @@
                 unit: unit,
                 missions: 0
             };
-            const { error } = await supabase.from('officers').insert([newUser]);
+            const { error } = await supabase.from('officers').insert([entry]);
             if (!error) {
-                myData = newUser;
-                renderDash();
+                userData = entry;
+                renderUser();
                 show('screen-dash');
                 tg.HapticFeedback.notificationOccurred('success');
             }
         }
 
         async function updateMissions() {
-            const { data, error } = await supabase.rpc('increment_missions', { user_id: user.id });
-            myData.missions += 1;
-            renderDash();
-            tg.HapticFeedback.impactOccurred('medium');
-            tg.showAlert("Duty Reported, Officer!");
+            const { error } = await supabase.rpc('increment_missions', { user_id: user.id });
+            if (!error) {
+                userData.missions++;
+                renderUser();
+                tg.HapticFeedback.impactOccurred('medium');
+            }
         }
 
-        function renderDash() {
-            document.getElementById('my-name').innerText = myData.name.toUpperCase();
-            document.getElementById('my-unit').innerText = `${myData.branch} • ${myData.unit}`;
-            document.getElementById('my-photo').src = myData.photo;
+        function renderUser() {
+            document.getElementById('my-name').innerText = userData.name.toUpperCase();
+            document.getElementById('my-unit').innerText = `${userData.branch} • ${userData.unit}`;
+            document.getElementById('my-missions').innerText = userData.missions;
+            document.getElementById('my-photo').src = userData.photo;
             
             let rank = "LIEUTENANT";
-            if(myData.missions >= 20) rank = "GENERAL";
-            else if(myData.missions >= 10) rank = "MAJOR";
-            document.getElementById('rank-name').innerText = rank;
+            if(userData.missions >= 50) rank = "FIELD MARSHAL";
+            else if(userData.missions >= 20) rank = "GENERAL";
+            else if(userData.missions >= 10) rank = "MAJOR";
+            document.getElementById('rank-display').innerText = rank;
         }
 
         async function loadRoster() {
-            const { data, error } = await supabase.from('officers').select('*').order('missions', { ascending: false }).limit(20);
-            const container = document.getElementById('roster-container');
-            container.innerHTML = "";
+            const { data, error } = await supabase.from('officers').select('*').order('missions', { ascending: false }).limit(50);
+            const list = document.getElementById('roster-list');
+            list.innerHTML = "";
             data.forEach(off => {
-                container.innerHTML += `
-                    <div class="officer-card">
+                list.innerHTML += `
+                    <div class="roster-card">
                         <img src="${off.photo}">
-                        <div class="info">
-                            <div class="name">${off.name}</div>
-                            <div class="unit-tag">${off.branch} • ${off.unit}</div>
+                        <div style="flex:1">
+                            <div style="font-weight:bold; font-size:0.9rem;">${off.name}</div>
+                            <div style="font-size:0.6rem; color:var(--saffron);">${off.branch} • ${off.unit}</div>
                         </div>
-                        <div class="score">${off.missions}</div>
+                        <div style="font-weight:900; color:var(--green);">${off.missions}</div>
                     </div>
                 `;
             });
@@ -142,15 +158,15 @@
         function show(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active-nav'));
-            if(id === 'screen-dash') document.getElementById('n-dash').classList.add('active-nav');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('nav-active'));
+            if(id === 'screen-dash') document.getElementById('btn-dash').classList.add('nav-active');
             if(id === 'screen-roster') {
-                document.getElementById('n-roster').classList.add('active-nav');
+                document.getElementById('btn-roster').classList.add('nav-active');
                 loadRoster();
             }
         }
 
-        checkUser();
+        init();
     </script>
 </body>
 </html>
