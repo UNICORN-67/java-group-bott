@@ -10,81 +10,83 @@
 
     <style>
         :root { --bg: #000; --saffron: #FF9933; --white: #FFF; --green: #138808; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
+        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; padding: 0; overflow-x: hidden; }
         
-        #status-overlay { position: fixed; inset: 0; background: #000; display: flex; justify-content: center; align-items: center; z-index: 9999; }
-        .screen { display: none; padding: 20px; flex-direction: column; align-items: center; flex: 1; }
+        #init-loader { position: fixed; inset: 0; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; text-align: center; padding: 20px; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top: 4px solid var(--saffron); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .screen { display: none; padding: 20px; flex-direction: column; align-items: center; min-height: 100vh; box-sizing: border-box; }
         .active { display: flex; }
-
-        /* Dashboard UI */
-        .rank-badge { color: gold; border: 1px solid gold; padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; margin-top: 40px; }
-        .profile-img { width: 100px; height: 100px; border-radius: 50%; border: 3px solid white; margin: 20px 0; background: #222; }
-        .mission-count { font-size: 3.5rem; font-weight: 900; margin: 0; background: linear-gradient(to bottom, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-
-        /* Roster UI */
-        .roster-card { display: flex; align-items: center; background: #111; width: 100%; max-width: 350px; padding: 12px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #222; }
-        .roster-card img { width: 40px; height: 40px; border-radius: 50%; margin-right: 12px; }
         
-        /* Buttons & Nav */
-        .btn { padding: 16px; width: 100%; max-width: 300px; border-radius: 12px; border: none; font-weight: bold; background: linear-gradient(90deg, var(--saffron), var(--white), var(--green)); color: #000; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; }
+        .btn { padding: 16px; width: 100%; max-width: 300px; border-radius: 12px; border: none; font-weight: bold; background: linear-gradient(90deg, var(--saffron), var(--white), var(--green)); color: #000; margin-top: 12px; cursor: pointer; text-transform: uppercase; }
+        
         .nav { position: fixed; bottom: 0; width: 100%; background: #0a0a0a; display: flex; justify-content: space-around; padding: 15px 0; border-top: 1px solid #222; }
-        .nav-item { font-size: 0.7rem; color: #555; transition: 0.3s; }
-        .nav-active { color: var(--saffron); transform: scale(1.1); }
+        .nav-item { font-size: 0.75rem; color: #555; cursor: pointer; }
+        .nav-active { color: var(--saffron); font-weight: bold; }
+
+        .officer-card { display: flex; align-items: center; background: #111; width: 100%; padding: 12px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #222; max-width: 400px;}
+        .officer-card img { width: 45px; height: 45px; border-radius: 50%; margin-right: 12px; }
     </style>
 </head>
 <body>
 
-    <div id="status-overlay">COMMAND INITIALIZING...</div>
+    <div id="init-loader">
+        <div class="spinner"></div>
+        <p id="loader-text" style="margin-top: 20px; font-size: 0.9rem; color: #888;">INITIALIZING COMMAND...</p>
+    </div>
 
     <div id="screen-select" class="screen">
-        <h2 style="margin-top: 60px;">ENLIST FOR SERVICE</h2>
-        <p style="color: #666; font-size: 0.8rem; margin-bottom: 30px;">CHOOSE YOUR UNIT PERMANENTLY</p>
+        <h2 style="margin-top: 50px;">ENLIST IN SERVICE</h2>
         <button class="btn" onclick="register('ARMY', 'Para SF')">JOIN ARMY: PARA SF</button>
-        <button class="btn" style="margin-top:12px;" onclick="register('NAVY', 'MARCOS')">JOIN NAVY: MARCOS</button>
-        <button class="btn" style="margin-top:12px;" onclick="register('AIR FORCE', 'GARUD')">JOIN AIR FORCE: GARUD</button>
+        <button class="btn" onclick="register('NAVY', 'MARCOS')">JOIN NAVY: MARCOS</button>
+        <button class="btn" onclick="register('AIR FORCE', 'GARUD')">JOIN AIR FORCE: GARUD</button>
     </div>
 
     <div id="screen-dash" class="screen">
-        <div id="rank-display" class="rank-badge">LIEUTENANT</div>
-        <img id="my-photo" class="profile-img" src="">
-        <h2 id="my-name" style="margin:0;">OFFICER</h2>
-        <p id="my-unit" style="color:var(--saffron); font-size: 0.8rem;"></p>
-        <h1 id="my-missions" class="mission-count">0</h1>
-        <p style="color:#555; font-size: 0.7rem; margin-top: -5px;">MISSIONS COMPLETED</p>
-        <button class="btn" style="margin-top: 30px;" onclick="updateMissions()">REPORT FOR DUTY</button>
+        <img id="my-photo" src="" style="width:100px; height:100px; border-radius:50%; border:2px solid white; margin-top:40px;">
+        <h2 id="my-name">OFFICER</h2>
+        <p id="my-unit" style="color:var(--saffron); font-size:0.8rem;"></p>
+        <h1 id="my-missions" style="font-size: 4rem; margin: 0;">0</h1>
+        <button class="btn" onclick="updateMissions()">REPORT DUTY</button>
     </div>
 
     <div id="screen-roster" class="screen">
-        <h2 style="margin-top: 20px;">BATTALION ROSTER</h2>
-        <div id="roster-list" style="width:100%; display:flex; flex-direction:column; align-items:center; padding-bottom: 100px;"></div>
+        <h2 style="margin-top: 20px;">GLOBAL ROSTER</h2>
+        <div id="roster-list" style="width:100%; padding-bottom: 100px;"></div>
     </div>
 
     <div class="nav">
-        <div class="nav-item nav-active" id="btn-dash" onclick="show('screen-dash')">BASE</div>
-        <div class="nav-item" id="btn-roster" onclick="show('screen-roster')">ROSTER</div>
+        <div class="nav-item nav-active" id="n-dash" onclick="show('screen-dash')">BASE</div>
+        <div class="nav-item" id="n-roster" onclick="show('screen-roster')">ROSTER</div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.ready(); tg.expand();
+        tg.ready();
+        tg.expand();
 
-        // --- PASTE YOUR KEYS HERE ---
+        // --- PASTE YOUR ACTUAL KEYS HERE ---
         const SB_URL = "https://jdqkfjwijcpdnssmniov.supabase.co"; 
         const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkcWtmandpamNwZG5zc21uaW92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0ODk3ODgsImV4cCI6MjA4NTA2NTc4OH0.Ho0bj_umu8GVXOJXpTEF--8y2emlbbaBKlOPpKqoxEc";
-        // ----------------------------
+        // ----------------------------------------------
 
+        const user = tg.initDataUnsafe?.user || { id: 12345, first_name: "Tester" };
         let supabase;
-        try {
-            supabase = supabase.createClient(SB_URL, SB_KEY);
-        } catch(e) { console.error("Client Init Error"); }
-
-        const user = tg.initDataUnsafe?.user || { id: 101, first_name: "Local_Officer" };
         let userData = null;
 
         async function init() {
             try {
-                const { data, error } = await supabase.from('officers').select('*').eq('id', user.id).single();
-                document.getElementById('status-overlay').style.display = 'none';
+                // Initialize Supabase Client
+                supabase = supabase.createClient(SB_URL, SB_KEY);
+                
+                // Fetch User Data
+                const { data, error } = await supabase.from('officers').select('*').eq('id', user.id).maybeSingle();
+                
+                if (error) throw error;
+
+                document.getElementById('init-loader').style.display = 'none';
+
                 if (data) {
                     userData = data;
                     renderUser();
@@ -93,7 +95,9 @@
                     show('screen-select');
                 }
             } catch (err) {
-                document.getElementById('status-overlay').innerText = "DB CONNECTION ERROR";
+                console.error(err);
+                document.getElementById('loader-text').style.color = "#ff4444";
+                document.getElementById('loader-text').innerHTML = "<b>CONNECTION ERROR:</b><br>" + err.message + "<br><br>Check Keys & RLS Policies.";
             }
         }
 
@@ -111,11 +115,13 @@
                 userData = entry;
                 renderUser();
                 show('screen-dash');
-                tg.HapticFeedback.notificationOccurred('success');
+            } else {
+                alert("Error: " + error.message);
             }
         }
 
         async function updateMissions() {
+            // Update via RPC function
             const { error } = await supabase.rpc('increment_missions', { user_id: user.id });
             if (!error) {
                 userData.missions++;
@@ -126,47 +132,43 @@
 
         function renderUser() {
             document.getElementById('my-name').innerText = userData.name.toUpperCase();
-            document.getElementById('my-unit').innerText = `${userData.branch} • ${userData.unit}`;
+            document.getElementById('my-unit').innerText = userData.branch + " • " + userData.unit;
             document.getElementById('my-missions').innerText = userData.missions;
             document.getElementById('my-photo').src = userData.photo;
-            
-            let rank = "LIEUTENANT";
-            if(userData.missions >= 50) rank = "FIELD MARSHAL";
-            else if(userData.missions >= 20) rank = "GENERAL";
-            else if(userData.missions >= 10) rank = "MAJOR";
-            document.getElementById('rank-display').innerText = rank;
         }
 
         async function loadRoster() {
-            const { data, error } = await supabase.from('officers').select('*').order('missions', { ascending: false }).limit(50);
+            const { data, error } = await supabase.from('officers').select('*').order('missions', { ascending: false }).limit(20);
             const list = document.getElementById('roster-list');
             list.innerHTML = "";
-            data.forEach(off => {
-                list.innerHTML += `
-                    <div class="roster-card">
-                        <img src="${off.photo}">
-                        <div style="flex:1">
-                            <div style="font-weight:bold; font-size:0.9rem;">${off.name}</div>
-                            <div style="font-size:0.6rem; color:var(--saffron);">${off.branch} • ${off.unit}</div>
+            if(data) {
+                data.forEach(off => {
+                    list.innerHTML += `
+                        <div class="officer-card">
+                            <img src="${off.photo}">
+                            <div style="flex:1">
+                                <div style="font-weight:bold; font-size:0.9rem;">${off.name}</div>
+                                <div style="font-size:0.65rem; color:var(--saffron);">${off.branch} • ${off.unit}</div>
+                            </div>
+                            <div style="font-weight:bold; color:var(--green);">${off.missions}</div>
                         </div>
-                        <div style="font-weight:900; color:var(--green);">${off.missions}</div>
-                    </div>
-                `;
-            });
+                    `;
+                });
+            }
         }
 
         function show(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('nav-active'));
-            if(id === 'screen-dash') document.getElementById('btn-dash').classList.add('nav-active');
+            if(id === 'screen-dash') document.getElementById('n-dash').classList.add('nav-active');
             if(id === 'screen-roster') {
-                document.getElementById('btn-roster').classList.add('nav-active');
+                document.getElementById('n-roster').classList.add('nav-active');
                 loadRoster();
             }
         }
 
-        init();
+        window.onload = init;
     </script>
 </body>
 </html>
