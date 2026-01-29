@@ -3,213 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE SYSTEM - Solo Leveling</title>
+    <title>THE SYSTEM - Hunter PvP</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root {
-            --system-blue: #00d2ff;
-            --system-bg: rgba(0, 10, 30, 0.9);
-            --glow: 0 0 15px rgba(0, 210, 255, 0.6);
+        :root { 
+            --blue: #00d2ff; 
+            --red: #ff4444; 
+            --bg: #02020b; 
+            --gold: #ffcc00; 
+            --panel: rgba(0, 15, 40, 0.9);
         }
 
-        body {
-            background: #02020b;
-            color: white;
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            overflow: hidden;
-            background-image: radial-gradient(circle at center, #0a192f 0%, #02020b 100%);
+        body { 
+            background: var(--bg); 
+            color: white; 
+            font-family: 'Segoe UI', sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            margin: 0; 
+            padding: 0;
+            overflow-x: hidden;
         }
 
-        #system-interface {
-            width: 380px;
-            background: var(--system-bg);
-            border: 2px solid var(--system-blue);
-            border-radius: 5px;
-            box-shadow: var(--glow), inset 0 0 20px rgba(0, 210, 255, 0.2);
-            padding: 20px;
-            position: relative;
-            backdrop-filter: blur(10px);
-        }
-
-        .header {
-            text-align: center;
-            border-bottom: 1px solid var(--system-blue);
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-
-        .header h1 {
-            font-size: 1.2rem;
-            letter-spacing: 4px;
-            margin: 0;
-            color: var(--system-blue);
-            text-transform: uppercase;
-        }
-
-        .status-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 0.9rem;
-        }
-
-        .stat-box {
-            margin: 15px 0;
-            padding: 10px;
-            border: 1px solid rgba(0, 210, 255, 0.3);
-        }
-
-        .stat-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 8px 0;
-        }
-
-        .progress-bar {
+        /* Top System Message */
+        #system-broadcast {
             width: 100%;
-            height: 8px;
-            background: #111;
-            border: 1px solid var(--system-blue);
-            margin-top: 5px;
+            background: rgba(0, 210, 255, 0.15);
+            border-bottom: 1px solid var(--blue);
+            padding: 12px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.85rem;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            min-height: 20px;
         }
 
-        .progress-fill {
-            height: 100%;
-            background: var(--system-blue);
-            box-shadow: var(--glow);
-            width: 0%;
-            transition: width 0.3s ease;
+        /* Main Profile Card */
+        .hunter-ui {
+            width: 90%;
+            max-width: 380px;
+            background: var(--panel);
+            border: 2px solid var(--blue);
+            box-shadow: 0 0 20px rgba(0, 210, 255, 0.3);
+            padding: 25px;
+            margin-top: 20px;
+            border-radius: 5px;
+            position: relative;
         }
 
-        .quest-item {
-            background: rgba(0, 210, 255, 0.1);
-            padding: 10px;
-            margin: 10px 0;
-            cursor: pointer;
-            border-left: 3px solid var(--system-blue);
-            transition: 0.2s;
+        .rank-display {
+            font-size: 3.5rem;
+            font-weight: 900;
+            text-align: center;
+            margin: 0;
+            line-height: 1;
+            letter-spacing: -2px;
         }
 
-        .quest-item:hover {
-            background: rgba(0, 210, 255, 0.2);
+        .stat-grid {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            border-top: 1px solid rgba(0, 210, 255, 0.2);
+            padding-top: 15px;
         }
 
-        .quest-item.completed {
-            opacity: 0.5;
-            text-decoration: line-through;
-            border-left-color: #555;
-        }
+        .stat-box { text-align: center; }
+        .stat-box b { font-size: 1.5rem; color: var(--blue); }
 
+        /* Buttons */
         button {
             background: transparent;
-            color: var(--system-blue);
-            border: 1px solid var(--system-blue);
-            padding: 2px 8px;
+            color: var(--blue);
+            border: 1px solid var(--blue);
+            padding: 12px;
             cursor: pointer;
-            font-size: 0.8rem;
-        }
-
-        button:hover {
-            background: var(--system-blue);
-            color: black;
-        }
-
-        .rank-badge {
-            color: #ffcc00;
             font-weight: bold;
-            text-shadow: 0 0 5px #ffcc00;
+            text-transform: uppercase;
+            width: 100%;
+            transition: 0.3s;
         }
+
+        button:hover { background: var(--blue); color: black; }
+
+        /* Leaderboard */
+        .active-list {
+            width: 90%;
+            max-width: 380px;
+            margin-top: 25px;
+        }
+
+        .player-row {
+            background: rgba(255,255,255,0.03);
+            border-left: 3px solid var(--blue);
+            margin-bottom: 8px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .atk-btn {
+            border-color: var(--red);
+            color: var(--red);
+            padding: 5px 12px;
+            width: auto;
+            font-size: 0.7rem;
+        }
+
+        .atk-btn:hover { background: var(--red); color: white; }
+
+        .loading { opacity: 0.5; pointer-events: none; }
     </style>
 </head>
 <body>
 
-    <div id="system-interface">
-        <div class="header">
-            <h1>Status Window</h1>
-            <p>Player: <span id="player-name">SUNG JIN-WOO</span></p>
+    <div id="system-broadcast">Connecting to the System...</div>
+
+    <div class="hunter-ui">
+        <h1 id="rank" class="rank-display">RANK E</h1>
+        <p id="my-id" style="text-align: center; opacity: 0.6; margin: 5px 0;">HUNTER ID: ---</p>
+
+        <div class="stat-grid">
+            <div class="stat-box">LVL<br><b id="lvl">1</b></div>
+            <div class="stat-box">STR<br><b id="str">10</b></div>
         </div>
 
-        <div class="status-row">
-            <span>Level: <b id="level">1</b></span>
-            <span>Rank: <span class="rank-badge" id="rank">E</span></span>
-        </div>
+        <button id="train-btn" onclick="train()">Daily Quest: Push-ups (+5 STR)</button>
+    </div>
 
-        <div class="status-row">
-            <span>Job: <b id="job">None</b></span>
-            <span>Fatigue: <b id="fatigue">0</b></span>
-        </div>
-
-        <div class="progress-bar"><div id="exp-bar" class="progress-fill"></div></div>
-        <p style="font-size: 0.7rem; text-align: right; margin-top: 2px;">EXP to Level Up</p>
-
-        <div class="stat-box">
-            <div class="stat-item">Strength: <span id="str">10</span> <button onclick="addStat('str')">+</button></div>
-            <div class="stat-item">Agility: <span id="agi">10</span> <button onclick="addStat('agi')">+</button></div>
-            <div class="stat-item">Intelligence: <span id="int">10</span> <button onclick="addStat('int')">+</button></div>
-            <div style="font-size: 0.8rem; color: #aaa;">Available Points: <span id="points">0</span></div>
-        </div>
-
-        <h3 style="font-size: 1rem; color: var(--system-blue);">[DAILY QUESTS]</h3>
-        <div id="quest-list">
-            <div class="quest-item" onclick="completeQuest(this, 10)">Push-ups: 0/100</div>
-            <div class="quest-item" onclick="completeQuest(this, 15)">Running: 0/10km</div>
-            <div class="quest-item" onclick="completeQuest(this, 5)">Squats: 0/100</div>
-        </div>
+    <div class="active-list">
+        <h3 style="color: var(--blue); border-bottom: 1px solid var(--blue); padding-bottom: 5px;">ACTIVE TARGETS</h3>
+        <div id="player-list">
+            </div>
     </div>
 
     <script>
-        let stats = { level: 1, exp: 0, str: 10, agi: 10, int: 10, points: 5 };
-        const ranks = ["E", "D", "C", "B", "A", "S"];
+        // 1. SUPABASE CONFIG (Step 4 se apni keys yahan dalein)
+        const URL = 'https://jdqkfjwijcpdnssmniov.supabase.co';
+        const KEY = 'jdqkfjwijcpdnssmniov';
+        const supabase = supabase.createClient(URL, KEY);
+
+        // 2. PLAYER IDENTITY
+        let myId = localStorage.getItem('hunter_id') || "HUNTER-" + Math.floor(Math.random()*8999+1000);
+        localStorage.setItem('hunter_id', myId);
+
+        let myData = { id: myId, str: 10, lvl: 1, msg: "" };
+
+        async function startSystem() {
+            // Check if player exists in DB
+            let { data } = await supabase.from('hunters').select().eq('id', myId).single();
+            
+            if (data) {
+                myData = data;
+            } else {
+                await supabase.from('hunters').insert([myData]);
+            }
+
+            updateUI();
+            fetchPlayers();
+
+            // Realtime Updates: Jab koi bhi player update ho
+            supabase.channel('system_changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'hunters' }, (payload) => {
+                fetchPlayers();
+                if(payload.new && payload.new.msg) {
+                    showBroadcast(payload.new.msg);
+                }
+            })
+            .subscribe();
+        }
+
+        // 3. ACTIONS
+        async function train() {
+            const btn = document.getElementById('train-btn');
+            btn.classList.add('loading');
+            
+            myData.str += 5;
+            myData.lvl = Math.floor(myData.str / 10);
+            
+            await supabase.from('hunters').update({ str: myData.str, lvl: myData.lvl }).eq('id', myId);
+            
+            updateUI();
+            btn.classList.remove('loading');
+        }
+
+        async function attack(targetId, targetStr) {
+            if (myData.str > targetStr) {
+                // Victory
+                myData.str += 10;
+                myData.lvl = Math.floor(myData.str / 10);
+                const victoryMsg = `SYSTEM: ${myId} has ELIMINATED ${targetId}!`;
+                
+                await supabase.from('hunters').update({ 
+                    str: myData.str, 
+                    lvl: myData.lvl, 
+                    msg: victoryMsg 
+                }).eq('id', myId);
+                
+                showBroadcast("VICTORY! Target defeated.");
+            } else {
+                // Defeat
+                showBroadcast("DEFEAT! You were too weak.");
+            }
+            updateUI();
+        }
+
+        // 4. UI HELPERS
+        async function fetchPlayers() {
+            const { data } = await supabase.from('hunters').select().neq('id', myId).order('str', { ascending: false }).limit(10);
+            const list = document.getElementById('player-list');
+            list.innerHTML = data.length ? "" : "<p style='opacity:0.5'>No other hunters online...</p>";
+            
+            data.forEach(p => {
+                list.innerHTML += `
+                    <div class="player-row">
+                        <div><b>${p.id}</b><br><small>STR: ${p.str} | LVL: ${p.lvl}</small></div>
+                        <button class="atk-btn" onclick="attack('${p.id}', ${p.str})">ATTACK</button>
+                    </div>`;
+            });
+        }
 
         function updateUI() {
-            document.getElementById('level').innerText = stats.level;
-            document.getElementById('str').innerText = stats.str;
-            document.getElementById('agi').innerText = stats.agi;
-            document.getElementById('int').innerText = stats.int;
-            document.getElementById('points').innerText = stats.points;
+            document.getElementById('my-id').innerText = "HUNTER ID: " + myId;
+            document.getElementById('str').innerText = myData.str;
+            document.getElementById('lvl').innerText = myData.lvl;
             
-            // Update Rank
-            let rankIndex = Math.floor(stats.level / 10);
-            document.getElementById('rank').innerText = ranks[rankIndex] || "S";
+            let rank = "E";
+            if (myData.lvl >= 80) rank = "S";
+            else if (myData.lvl >= 50) rank = "A";
+            else if (myData.lvl >= 30) rank = "B";
+            else if (myData.lvl >= 15) rank = "C";
+            else if (myData.lvl >= 5) rank = "D";
 
-            // Update EXP Bar
-            let expPercent = (stats.exp % 100);
-            document.getElementById('exp-bar').style.width = expPercent + "%";
-
-            // Level up logic
-            if (stats.exp >= 100) {
-                stats.level++;
-                stats.exp = 0;
-                stats.points += 3;
-                alert("⚠ LEVEL UP! ⚠\nYou have gained 3 stat points.");
-                updateUI();
-            }
+            const rEl = document.getElementById('rank');
+            rEl.innerText = "RANK " + rank;
+            rEl.style.color = (rank === "S") ? "var(--gold)" : "white";
         }
 
-        function addStat(type) {
-            if (stats.points > 0) {
-                stats[type]++;
-                stats.points--;
-                updateUI();
-            }
+        function showBroadcast(text) {
+            const bar = document.getElementById('system-broadcast');
+            bar.innerText = text;
+            bar.style.background = "rgba(255, 204, 0, 0.2)";
+            setTimeout(() => { bar.style.background = "rgba(0, 210, 255, 0.15)"; }, 4000);
         }
 
-        function completeQuest(el, xp) {
-            if (!el.classList.contains('completed')) {
-                el.classList.add('completed');
-                stats.exp += xp;
-                updateUI();
-            }
-        }
-
-        // Initialize
-        updateUI();
+        startSystem();
     </script>
 </body>
 </html>
+
 
