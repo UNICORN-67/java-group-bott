@@ -99,7 +99,7 @@ def run_scheduler():
 
 # --- 6. STARTUP ---
 def run_bot():
-    bot_app = Application.builder().token("YOUR_BOT_TOKEN").build()
+    bot_app = Application.builder().token("7740494854:AAFFLULc0lJ_Py2E0rj7RzNi1pCYeSfLOE0").build()
     bot_app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, handle_data))
     bot_app.run_polling()
 
