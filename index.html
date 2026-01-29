@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE SYSTEM - Solo Leveling</title>
+    <style>
+        :root {
+            --system-blue: #00d2ff;
+            --system-bg: rgba(0, 10, 30, 0.9);
+            --glow: 0 0 15px rgba(0, 210, 255, 0.6);
+        }
+
+        body {
+            background: #02020b;
+            color: white;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            background-image: radial-gradient(circle at center, #0a192f 0%, #02020b 100%);
+        }
+
+        #system-interface {
+            width: 380px;
+            background: var(--system-bg);
+            border: 2px solid var(--system-blue);
+            border-radius: 5px;
+            box-shadow: var(--glow), inset 0 0 20px rgba(0, 210, 255, 0.2);
+            padding: 20px;
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 1px solid var(--system-blue);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 1.2rem;
+            letter-spacing: 4px;
+            margin: 0;
+            color: var(--system-blue);
+            text-transform: uppercase;
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .stat-box {
+            margin: 15px 0;
+            padding: 10px;
+            border: 1px solid rgba(0, 210, 255, 0.3);
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 8px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #111;
+            border: 1px solid var(--system-blue);
+            margin-top: 5px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--system-blue);
+            box-shadow: var(--glow);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .quest-item {
+            background: rgba(0, 210, 255, 0.1);
+            padding: 10px;
+            margin: 10px 0;
+            cursor: pointer;
+            border-left: 3px solid var(--system-blue);
+            transition: 0.2s;
+        }
+
+        .quest-item:hover {
+            background: rgba(0, 210, 255, 0.2);
+        }
+
+        .quest-item.completed {
+            opacity: 0.5;
+            text-decoration: line-through;
+            border-left-color: #555;
+        }
+
+        button {
+            background: transparent;
+            color: var(--system-blue);
+            border: 1px solid var(--system-blue);
+            padding: 2px 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        button:hover {
+            background: var(--system-blue);
+            color: black;
+        }
+
+        .rank-badge {
+            color: #ffcc00;
+            font-weight: bold;
+            text-shadow: 0 0 5px #ffcc00;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="system-interface">
+        <div class="header">
+            <h1>Status Window</h1>
+            <p>Player: <span id="player-name">SUNG JIN-WOO</span></p>
+        </div>
+
+        <div class="status-row">
+            <span>Level: <b id="level">1</b></span>
+            <span>Rank: <span class="rank-badge" id="rank">E</span></span>
+        </div>
+
+        <div class="status-row">
+            <span>Job: <b id="job">None</b></span>
+            <span>Fatigue: <b id="fatigue">0</b></span>
+        </div>
+
+        <div class="progress-bar"><div id="exp-bar" class="progress-fill"></div></div>
+        <p style="font-size: 0.7rem; text-align: right; margin-top: 2px;">EXP to Level Up</p>
+
+        <div class="stat-box">
+            <div class="stat-item">Strength: <span id="str">10</span> <button onclick="addStat('str')">+</button></div>
+            <div class="stat-item">Agility: <span id="agi">10</span> <button onclick="addStat('agi')">+</button></div>
+            <div class="stat-item">Intelligence: <span id="int">10</span> <button onclick="addStat('int')">+</button></div>
+            <div style="font-size: 0.8rem; color: #aaa;">Available Points: <span id="points">0</span></div>
+        </div>
+
+        <h3 style="font-size: 1rem; color: var(--system-blue);">[DAILY QUESTS]</h3>
+        <div id="quest-list">
+            <div class="quest-item" onclick="completeQuest(this, 10)">Push-ups: 0/100</div>
+            <div class="quest-item" onclick="completeQuest(this, 15)">Running: 0/10km</div>
+            <div class="quest-item" onclick="completeQuest(this, 5)">Squats: 0/100</div>
+        </div>
+    </div>
+
+    <script>
+        let stats = { level: 1, exp: 0, str: 10, agi: 10, int: 10, points: 5 };
+        const ranks = ["E", "D", "C", "B", "A", "S"];
+
+        function updateUI() {
+            document.getElementById('level').innerText = stats.level;
+            document.getElementById('str').innerText = stats.str;
+            document.getElementById('agi').innerText = stats.agi;
+            document.getElementById('int').innerText = stats.int;
+            document.getElementById('points').innerText = stats.points;
+            
+            // Update Rank
+            let rankIndex = Math.floor(stats.level / 10);
+            document.getElementById('rank').innerText = ranks[rankIndex] || "S";
+
+            // Update EXP Bar
+            let expPercent = (stats.exp % 100);
+            document.getElementById('exp-bar').style.width = expPercent + "%";
+
+            // Level up logic
+            if (stats.exp >= 100) {
+                stats.level++;
+                stats.exp = 0;
+                stats.points += 3;
+                alert("⚠ LEVEL UP! ⚠\nYou have gained 3 stat points.");
+                updateUI();
+            }
+        }
+
+        function addStat(type) {
+            if (stats.points > 0) {
+                stats[type]++;
+                stats.points--;
+                updateUI();
+            }
+        }
+
+        function completeQuest(el, xp) {
+            if (!el.classList.contains('completed')) {
+                el.classList.add('completed');
+                stats.exp += xp;
+                updateUI();
+            }
+        }
+
+        // Initialize
+        updateUI();
+    </script>
+</body>
+</html>
