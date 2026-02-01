@@ -1,0 +1,8 @@
+{
+  "name": "tg-group-manager",
+  "version": "1.0.0",
+  "main": "api/index.js",
+  "dependencies": {
+    "telegraf": "^4.12.0"
+  }
+}
