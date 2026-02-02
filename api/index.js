@@ -21,133 +21,100 @@ async function isAdmin(ctx) {
     } catch (e) { return false; }
 }
 
-const getHtml = (groups, selectedGid, settings, admins = []) => {
+const getHtml = (groups, selectedGid, settings, members = [], chatInfo = null) => {
     const style = `
         <style>
-            :root { --neon: #00f2ff; --purple: #bc13fe; --bg: #0a0a0c; --glass: rgba(255, 255, 255, 0.05); }
-            body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: white; margin: 0; padding: 15px; overflow-x: hidden; }
+            :root { --neon: #00f2ff; --purple: #bc13fe; --bg: #0a0a0c; }
+            body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; padding: 15px; margin: 0; }
+            .container { max-width: 500px; margin: auto; }
             
-            .container { max-width: 600px; margin: auto; }
-            h2, h3 { text-shadow: 0 0 10px var(--neon); letter-spacing: 2px; text-transform: uppercase; text-align: center; }
+            /* Group Info Header */
+            .group-header { 
+                display: flex; align-items: center; gap: 15px; padding: 20px;
+                background: linear-gradient(135deg, rgba(0,242,255,0.1), rgba(188,19,254,0.1));
+                border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;
+                box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            }
+            .group-pic { width: 55px; height: 55px; border-radius: 50%; border: 2px solid var(--neon); display: flex; align-items: center; justify-content: center; background: #222; font-size: 24px; box-shadow: 0 0 10px var(--neon); }
+            .group-details h2 { margin: 0; font-size: 16px; text-shadow: 0 0 8px var(--neon); color: #fff; }
+            .group-details p { margin: 3px 0; font-size: 10px; color: #aaa; font-family: monospace; }
+            .member-count { color: var(--neon); font-weight: bold; font-size: 12px; margin-top: 5px; display: block; text-transform: uppercase; }
+
+            .card { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 20px; margin-bottom: 15px; }
             
-            .card { 
-                background: var(--glass); 
-                backdrop-filter: blur(15px);
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                padding: 20px; border-radius: 20px; margin-bottom: 20px; 
-                box-shadow: 0 15px 35px rgba(0,0,0,0.7);
-                transform: perspective(1000px) rotateX(2deg);
-            }
-
-            .group-card {
-                display: flex; justify-content: space-between; align-items: center;
-                background: linear-gradient(145deg, #1a1a1c, #0d0d0f);
-                border-left: 3px solid var(--neon);
-                padding: 15px; border-radius: 12px; margin-bottom: 12px;
-                cursor: pointer; transition: 0.3s;
-            }
-            .group-card:hover { transform: translateX(5px); box-shadow: 0 0 15px var(--neon); }
-
-            .row { display: flex; justify-content: space-between; align-items: center; margin: 15px 0; }
-
-            /* Neon Switch */
-            .switch { position: relative; width: 45px; height: 24px; }
-            .switch input { opacity: 0; width: 0; height: 0; }
-            .slider { 
-                position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; 
-                background: #333; transition: .4s; border-radius: 34px; 
-            }
-            .slider:before { 
-                position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; 
-                background: white; transition: .4s; border-radius: 50%; 
-            }
-            input:checked + .slider { background: var(--purple); box-shadow: 0 0 15px var(--purple); }
-            input:checked + .slider:before { transform: translateX(21px); }
-
-            input[type="text"] { 
-                width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #444; 
-                background: rgba(0,0,0,0.5); color: white; margin-top: 8px; outline: none;
-            }
-            input[type="text"]:focus { border-color: var(--neon); box-shadow: 0 0 10px var(--neon); }
-
-            .btn { 
-                border: none; color: white; border-radius: 8px; padding: 6px 10px; 
-                font-weight: bold; cursor: pointer; font-size: 10px; transition: 0.3s;
-            }
-            .btn-save { 
-                background: var(--neon); color: black; width: 100%; padding: 15px; 
-                border-radius: 15px; margin-top: 15px; font-size: 14px; font-weight: 800;
-                box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
-            }
-            .btn-mute { background: #ff9f0a; }
-            .btn-ban { background: #ff375f; }
-            .btn-ok { background: #30d158; }
-
-            .admin-item {
-                display: flex; justify-content: space-between; align-items: center;
-                background: rgba(255,255,255,0.03); padding: 10px; border-radius: 10px; margin-bottom: 8px;
-            }
-            .back-link { color: var(--neon); text-decoration: none; font-size: 12px; display: inline-block; margin-bottom: 10px; }
+            /* Member Item Styling */
+            .admin-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 12px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.05); transition: 0.3s; }
+            .user-info { display: flex; flex-direction: column; }
+            .user-name { font-size: 13px; font-weight: 500; color: #eee; }
+            .user-id { font-size: 10px; color: var(--neon); font-family: monospace; opacity: 0.8; margin-top: 2px; }
+            
+            /* Buttons */
+            .btn { border: none; color: white; border-radius: 6px; padding: 6px 10px; font-size: 10px; cursor: pointer; font-weight: bold; margin-left: 4px; transition: 0.2s; }
+            .btn:active { transform: scale(0.9); }
+            .btn-mute { background: #ff9f0a; box-shadow: 0 0 5px rgba(255,159,10,0.4); }
+            .btn-ban { background: #ff375f; box-shadow: 0 0 5px rgba(255,55,95,0.4); }
+            .btn-ok { background: #30d158; box-shadow: 0 0 5px rgba(48,209,88,0.4); }
+            
+            .admin-tag { color: var(--neon); font-size: 9px; border: 1px solid var(--neon); padding: 2px 8px; border-radius: 4px; letter-spacing: 1px; font-weight: bold; }
+            .save-btn { background: var(--neon); color: #000; width: 100%; padding: 15px; border-radius: 15px; font-weight: bold; border: none; cursor: pointer; margin-top: 10px; box-shadow: 0 0 20px rgba(0,242,255,0.4); text-transform: uppercase; }
         </style>
     `;
 
     if (!selectedGid) {
-        let list = groups.map(g => `<div class="group-card" onclick="location.href='?gid=${g.groupId}'"><span>💎 ${g.groupName || 'Unknown Chat'}</span><span>❯</span></div>`).join('');
-        return `<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0">${style}</head><body>
-            <div class="container">
-                <h2>NEON CORE</h2>
-                <div class="card"><h3>ACTIVE SECTORS</h3>${list || '<p style="text-align:center;color:#666;">No Groups Detected</p>'}</div>
-                <a href="https://t.me/${process.env.BOT_USERNAME}?startgroup=true" class="btn-save" style="text-decoration:none; display:block; text-align:center;">+ LINK NEW SECTOR</a>
-            </div>
-        </body></html>`;
+        let list = groups.map(g => `<div style="background:#161618; padding:15px; border-radius:12px; margin-bottom:10px; border-left:3px solid var(--neon); display:flex; justify-content:space-between;" onclick="location.href='?gid=${g.groupId}'"><span>💎 ${g.groupName}</span><span>❯</span></div>`).join('');
+        return `<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0">${style}</head><body><div class="container"><h2>NEON TERMINAL</h2><div class="card"><h3>SELECT SECTOR</h3>${list || '<p style="text-align:center; color:#666;">No Groups Found</p>'}</div></div></body></html>`;
     }
 
-    const isAntiLinkChecked = settings && settings.antiLink === true ? 'checked' : '';
-    let adminHtml = admins.map(a => `
-        <div class="admin-item">
-            <span style="font-size:13px;">${a.user.first_name} ${a.status === 'creator' ? '👑' : ''}</span>
-            ${a.status !== 'creator' ? `
-                <div>
-                    <button class="btn btn-mute" onclick="action('mute', '${a.user.id}')">MUTE</button>
-                    <button class="btn btn-ban" onclick="action('ban', '${a.user.id}')">BAN</button>
-                    <button class="btn btn-ok" onclick="action('unmute', '${a.user.id}')">✔</button>
+    let memberListHtml = members.map(m => {
+        const isUserAdmin = ['administrator', 'creator'].includes(m.status);
+        return `
+            <div class="admin-item">
+                <div class="user-info">
+                    <span class="user-name">${m.user.first_name} ${m.status === 'creator' ? '👑' : ''}</span>
+                    <span class="user-id">ID: ${m.user.id}</span>
                 </div>
-            ` : ''}
-        </div>
-    `).join('');
+                <div>
+                    ${isUserAdmin 
+                        ? `<span class="admin-tag">ADMIN</span>` 
+                        : `
+                            <button class="btn btn-mute" onclick="action('mute', '${m.user.id}')">MUTE</button>
+                            <button class="btn btn-ban" onclick="action('ban', '${m.user.id}')">BAN</button>
+                            <button class="btn btn-ok" onclick="action('unmute', '${m.user.id}')">✔</button>
+                        `
+                    }
+                </div>
+            </div>
+        `;
+    }).join('');
 
-    return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://telegram.org/js/telegram-web-app.js"></script>${style}</head>
+    return `<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://telegram.org/js/telegram-web-app.js"></script>${style}</head>
     <body>
         <div class="container">
-            <a href="/" class="back-link">❮ TERMINAL HOME</a>
-            <div class="card">
-                <h3>CORE CONFIG</h3>
-                <div class="row"><span>ANTI-LINK MODULE</span><label class="switch"><input type="checkbox" id="links" ${isAntiLinkChecked}><span class="slider"></span></label></div>
-                <label style="color:#666; font-size:11px;">GREETING PROTOCOL</label>
-                <input type="text" id="welcome" value="${settings?.welcomeMsg || ''}" placeholder="System greeting text...">
-                <button class="btn btn-save" onclick="save()">SYNC WITH DATABASE</button>
+            <a href="/" style="color:var(--neon); text-decoration:none; font-size:12px; margin-bottom:15px; display:inline-block;">❮ BACK TO TERMINAL</a>
+            
+            <div class="group-header">
+                <div class="group-pic">👥</div>
+                <div class="group-details">
+                    <h2>${chatInfo?.title || 'System Group'}</h2>
+                    <p>CHAT ID: ${selectedGid}</p>
+                    <span class="member-count">👥 TOTAL POPULATION: ${chatInfo?.members_count || '...'}</span>
+                </div>
             </div>
+
             <div class="card">
-                <h3 style="color:var(--purple); text-shadow: 0 0 10px var(--purple);">CREW MEMBERS</h3>
-                ${adminHtml}
+                <h3 style="font-size:11px; margin:0 0 15px 0; color:#666; letter-spacing:1px;">MODERATION SECTOR</h3>
+                ${memberListHtml}
             </div>
+            
+            <button class="save-btn" onclick="window.Telegram.WebApp.close()">CLOSE CONNECTION</button>
         </div>
         <script>
             let tg = window.Telegram.WebApp;
             tg.expand();
             tg.setHeaderColor('#0a0a0c');
 
-            function save() {
-                const data = { gid: "${selectedGid}", links: document.getElementById('links').checked, welcome: document.getElementById('welcome').value };
-                fetch('/api?save=true', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) })
-                .then(() => { 
-                    tg.showScanQrPopup({text: "DATA SYNCED"}); 
-                    setTimeout(()=>tg.closeScanQrPopup(), 1000); 
-                });
-            }
-
             function action(type, uid) {
-                if(!confirm("Execute " + type + " protocol?")) return;
+                if(!confirm("Execute " + type + " protocol for ID: " + uid + "?")) return;
                 fetch('/api?action=' + type, {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ gid: "${selectedGid}", uid: uid })
@@ -160,84 +127,55 @@ const getHtml = (groups, selectedGid, settings, admins = []) => {
     </body></html>`;
 };
 
-// --- Bot & API Logic ---
+// --- Main Handler ---
 module.exports = async (req, res) => {
     const database = await connectDB();
 
-    // 1. Actions Handler (Ban/Mute/Unmute)
+    // 1. Actions Logic
     if (req.query.action && req.method === 'POST') {
         const { gid, uid } = req.body;
         try {
             if (req.query.action === 'ban') await bot.telegram.banChatMember(gid, uid);
             if (req.query.action === 'mute') await bot.telegram.restrictChatMember(gid, uid, { permissions: { can_send_messages: false } });
-            if (req.query.action === 'unmute') await bot.telegram.restrictChatMember(gid, uid, { permissions: { 
-                can_send_messages: true, can_send_media_messages: true, can_send_other_messages: true, can_add_web_page_previews: true 
-            }});
-            return res.json({ ok: true, msg: "Protocol Executed!" });
-        } catch (e) { return res.json({ ok: false, msg: "Access Denied / Error" }); }
+            if (req.query.action === 'unmute') await bot.telegram.restrictChatMember(gid, uid, { permissions: { can_send_messages: true, can_send_media_messages: true, can_send_other_messages: true, can_add_web_page_previews: true }});
+            return res.json({ ok: true, msg: "Protocol executed successfully!" });
+        } catch (e) { return res.json({ ok: false, msg: "Execution Failed: Bot lacks permissions." }); }
     }
 
-    // 2. Save Settings Handler
-    if (req.query.save === 'true' && req.method === 'POST') {
-        const { gid, links, welcome } = req.body;
-        await database.collection('settings').updateOne(
-            { groupId: gid }, 
-            { $set: { antiLink: Boolean(links), welcomeMsg: welcome } }, 
-            { upsert: true }
-        );
-        return res.status(200).json({ ok: true });
-    }
-
-    // 3. Page View Handler
+    // 2. View Logic
     if (req.method === 'GET') {
         const gid = req.query.gid;
         res.setHeader('Content-Type', 'text/html');
         const settings = gid ? await database.collection('settings').findOne({ groupId: gid }) : null;
-        let admins = gid ? await bot.telegram.getChatAdministrators(gid).catch(()=>[]) : [];
+        let members = [], chatInfo = null;
+        if (gid) {
+            try { 
+                members = await bot.telegram.getChatAdministrators(gid); 
+                chatInfo = await bot.telegram.getChat(gid);
+                chatInfo.members_count = await bot.telegram.getChatMemberCount(gid);
+            } catch (e) { console.error("Data fetch error"); }
+        }
         const groups = !gid ? await database.collection('chats').find({ active: true }).toArray() : [];
-        return res.send(getHtml(groups, gid, settings, admins));
+        return res.send(getHtml(groups, gid, settings, members, chatInfo));
     }
 
-    // 4. Telegram Webhook Updates
-    if (req.method === 'POST') {
-        // Group Added Logic
-        if (req.body.my_chat_member) {
-            const chat = req.body.my_chat_member.chat;
-            await database.collection('chats').updateOne(
-                { groupId: chat.id.toString() },
-                { $set: { groupName: chat.title, active: true } },
-                { upsert: true }
-            );
-        }
-        await bot.handleUpdate(req.body);
-        return res.status(200).send('OK');
+    // 3. Webhook Updates
+    if (req.body && req.body.my_chat_member) {
+        const chat = req.body.my_chat_member.chat;
+        await database.collection('chats').updateOne(
+            { groupId: chat.id.toString() },
+            { $set: { groupName: chat.title, active: true } },
+            { upsert: true }
+        );
     }
+    await bot.handleUpdate(req.body);
+    res.status(200).send('OK');
 };
 
-// Bot Logic for messages
-bot.on('new_chat_members', async (ctx) => {
-    const database = await connectDB();
-    const config = await database.collection('settings').findOne({ groupId: ctx.chat.id.toString() });
-    if (config?.welcomeMsg) {
-        ctx.message.new_chat_members.forEach(m => ctx.reply(config.welcomeMsg.replace('{name}', m.first_name)));
-    }
-});
-
-bot.on('message', async (ctx, next) => {
-    if (ctx.chat.type === 'private') return next();
-    if (await isAdmin(ctx)) return next();
-    const database = await connectDB();
-    const config = await database.collection('settings').findOne({ groupId: ctx.chat.id.toString() });
-    if (config?.antiLink && ctx.message.entities?.some(e => e.type === 'url' || e.type === 'text_link')) {
-        await ctx.deleteMessage().catch(() => {});
-        return;
-    }
-    return next();
-});
-
+// --- Bot Commands ---
 bot.command('settings', async (ctx) => {
-    if (!(await isAdmin(ctx))) return ctx.reply("❌ ADMIN ACCESS ONLY.");
-    ctx.reply('⚙️ ACCESS TERMINAL:', Markup.inlineKeyboard([
-        Markup.button.webApp('OPEN DASHBOARD', `https://${process.env.VERCEL_URL}?gid=${ctx.chat.id}`)
+    if (!(await isAdmin(ctx))) return ctx.reply("❌ ACCESS DENIED: ADMIN ONLY.");
+    ctx.reply('🛠️ OPENING SECURE TERMINAL...', Markup.inlineKeyboard([
+        Markup.button.webApp('🔗 DASHBOARD', `https://${process.env.VERCEL_URL}?gid=${ctx.chat.id}`)
     ]));
 });
