@@ -12,23 +12,14 @@ async function connectDB() {
     return db;
 }
 
-// --- Frontend HTML ---
 const getHtml = (groups, selectedGid, settings) => {
     if (!selectedGid) {
-        let groupList = groups.map(g => `
-            <div class="card" onclick="window.location.href='?gid=${g.groupId}'">
-                <div style="display:flex; align-items:center;">
-                    <div class="icon">👥</div>
-                    <div><strong>${g.groupName || 'Group'}</strong></div>
-                </div>
-                <span>❯</span>
-            </div>
-        `).join('');
-        return `<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><style>body{font-family:sans-serif;background:#1c1c1d;color:white;padding:20px;}.card{background:#2c2c2e;padding:15px;border-radius:12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}.icon{width:40px;height:40px;background:#007aff;border-radius:50%;margin-right:15px;display:flex;align-items:center;justify-content:center;}.add-btn{background:#34c759;color:white;padding:15px;border-radius:12px;text-decoration:none;display:block;text-align:center;font-weight:bold;margin-top:20px;}</style><body><h2>Your Chats</h2>${groupList}<a href="https://t.me/${process.env.BOT_USERNAME}?startgroup=true" class="add-btn">+ Add Chat</a></body></html>`;
+        let list = groups.map(g => `<div class="card" onclick="location.href='?gid=${g.groupId}'"><span>👥 ${g.groupName || 'Group'}</span><span>❯</span></div>`).join('');
+        return `<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><style>body{background:#1c1c1d;color:white;padding:20px;font-family:sans-serif;}.card{background:#2c2c2e;padding:15px;border-radius:12px;margin-bottom:10px;display:flex;justify-content:space-between;cursor:pointer;}.add-btn{background:#34c759;color:white;padding:15px;border-radius:12px;display:block;text-align:center;text-decoration:none;font-weight:bold;margin-top:20px;}</style><body><h2>My Chats</h2>${list}<a href="https://t.me/${process.env.BOT_USERNAME}?startgroup=true" class="add-btn">+ Add Group</a></body></html>`;
     }
 
-    // Toggle logic: Agar settings me true hai toh 'checked' add hoga
-    const isAntiLinkOn = settings && settings.antiLink === true;
+    // TOGGLE STATE SYNC: Directly from the 'settings' object fetched in the handler
+    const isAntiLinkChecked = settings && settings.antiLink === true ? 'checked' : '';
 
     return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://telegram.org/js/telegram-web-app.js"></script></head>
     <style>
@@ -51,7 +42,7 @@ const getHtml = (groups, selectedGid, settings) => {
             <div class="row">
                 <span>Anti-Link Protection</span>
                 <label class="switch">
-                    <input type="checkbox" id="links" ${isAntiLinkOn ? 'checked' : ''}>
+                    <input type="checkbox" id="links" ${isAntiLinkChecked}>
                     <span class="slider"></span>
                 </label>
             </div>
@@ -60,45 +51,33 @@ const getHtml = (groups, selectedGid, settings) => {
                 <input type="text" id="welcome" value="${settings?.welcomeMsg || ''}" placeholder="Welcome {name}!">
             </div>
         </div>
-        <button class="save-btn" id="saveBtn" onclick="send()">Save All Settings</button>
+        <button class="save-btn" onclick="save()">Save All Settings</button>
         <script>
-            function send() {
-                const btn = document.getElementById('saveBtn');
-                btn.innerText = "Saving...";
+            function save() {
                 const data = {
-                    groupId: "${selectedGid}",
+                    gid: "${selectedGid}",
                     links: document.getElementById('links').checked,
-                    welcomeMsg: document.getElementById('welcome').value
+                    welcome: document.getElementById('welcome').value
                 };
-                window.Telegram.WebApp.sendData(JSON.stringify(data));
-                setTimeout(() => window.Telegram.WebApp.close(), 500);
+                // Method 2: POST directly to server to ensure database updates BEFORE closure
+                fetch('/api?save=true', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                }).then(() => {
+                    window.Telegram.WebApp.close();
+                });
             }
         </script>
     </body></html>`;
 };
 
-// --- Bot Functions ---
-
-bot.on('web_app_data', async (ctx) => {
-    try {
-        const data = JSON.parse(ctx.webAppData.data.json());
-        const database = await connectDB();
-        await database.collection('settings').updateOne(
-            { groupId: data.groupId },
-            { $set: { antiLink: Boolean(data.links), welcomeMsg: data.welcomeMsg } },
-            { upsert: true }
-        );
-        ctx.reply(`✅ Settings saved for this group!\nAnti-Link: $\{data.links ? 'ON' : 'OFF'}`);
-    } catch (e) { ctx.reply("❌ Error saving data."); }
-});
-
+// --- Bot Logic ---
 bot.on('new_chat_members', async (ctx) => {
     const database = await connectDB();
     const config = await database.collection('settings').findOne({ groupId: ctx.chat.id.toString() });
     if (config?.welcomeMsg) {
-        ctx.message.new_chat_members.forEach(m => {
-            ctx.reply(config.welcomeMsg.replace('{name}', m.first_name));
-        });
+        ctx.message.new_chat_members.forEach(m => ctx.reply(config.welcomeMsg.replace('{name}', m.first_name)));
     }
 });
 
@@ -106,13 +85,9 @@ bot.on('message', async (ctx, next) => {
     if (ctx.chat.type === 'private') return next();
     const database = await connectDB();
     const config = await database.collection('settings').findOne({ groupId: ctx.chat.id.toString() });
-    
-    if (config?.antiLink === true) {
-        const hasLink = ctx.message.entities?.some(e => e.type === 'url' || e.type === 'text_link');
-        if (hasLink) {
-            await ctx.deleteMessage().catch(() => {});
-            return;
-        }
+    if (config?.antiLink === true && ctx.message.entities?.some(e => e.type === 'url' || e.type === 'text_link')) {
+        await ctx.deleteMessage().catch(() => {});
+        return;
     }
     return next();
 });
@@ -123,16 +98,19 @@ bot.command('settings', (ctx) => {
     ]));
 });
 
-// Vercel Handler
+// --- Handler ---
 module.exports = async (req, res) => {
     const database = await connectDB();
-    if (req.method === 'GET') {
-        const gid = req.query.gid;
-        res.setHeader('Content-Type', 'text/html');
-        const settings = gid ? await database.collection('settings').findOne({ groupId: gid }) : null;
-        const groups = !gid ? await database.collection('chats').find({ active: true }).toArray() : [];
-        return res.send(getHtml(groups, gid, settings));
+    
+    // SAVE LOGIC (Direct from WebApp Fetch)
+    if (req.query.save === 'true' && req.method === 'POST') {
+        const { gid, links, welcome } = req.body;
+        await database.collection('settings').updateOne(
+            { groupId: gid },
+            { $set: { antiLink: Boolean(links), welcomeMsg: welcome } },
+            { upsert: true }
+        );
+        return res.status(200).json({ ok: true });
     }
-    await bot.handleUpdate(req.body);
-    res.status(200).send('OK');
-};
+
+    if (req.method ===
