@@ -1,7 +1,7 @@
 const { Telegraf, Markup } = require('telegraf');
 
 // REPLACE THESE
-const BOT_TOKEN = 'YOUR_BOT_TOKEN';
+const BOT_TOKEN = '7740494854:AAF3GX5WbVrx4aS9_neS4GDFV4wGUhUau2w';
 const APP_URL = 'https://your-project-name.vercel.app'; 
 
 const bot = new Telegraf(BOT_TOKEN);
