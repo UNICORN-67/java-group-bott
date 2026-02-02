@@ -1,52 +1,56 @@
 const { Telegraf, Markup } = require('telegraf');
+const { MongoClient } = require('mongodb');
 
-// Vercel Environment Variables se token uthayega
 const BOT_TOKEN = process.env.BOT_TOKEN;
-const bot = new Telegraf(BOT_TOKEN);
+const MONGO_URI = process.env.MONGO_URI; 
 
-// --- 1. FRONTEND: MINI APP HTML ---
-const htmlContent = `
+const bot = new Telegraf(BOT_TOKEN);
+let db;
+
+async function connectDB() {
+    if (db) return db;
+    const client = new MongoClient(MONGO_URI);
+    await client.connect();
+    db = client.db('tg_bot_db');
+    return db;
+}
+
+// --- HTML Frontend (With Welcome Message Input) ---
+const getHtml = (groupId, currentSettings) => `
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root {
-            --bg: var(--tg-theme-bg-color, #ffffff);
-            --text: var(--tg-theme-text-color, #222222);
-            --btn: var(--tg-theme-button-color, #3390ec);
-            --btn-text: var(--tg-theme-button-text-color, #ffffff);
-            --sec-bg: var(--tg-theme-secondary-bg-color, #f4f4f5);
-        }
-        body { font-family: -apple-system, sans-serif; background-color: var(--sec-bg); color: var(--text); margin: 0; padding: 20px; }
-        .card { background: var(--bg); border-radius: 12px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .row { display: flex; justify-content: space-between; align-items: center; margin: 10px 0; }
-        .footer-btn { background: var(--btn); color: var(--btn-text); border: none; width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        body { font-family: sans-serif; background: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #000); padding: 20px; }
+        .card { background: var(--tg-theme-secondary-bg-color, #f0f0f0); padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        input[type="text"] { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; margin-top: 5px; }
+        .switch-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        button { background: var(--tg-theme-button-color, #3390ec); color: var(--tg-theme-button-text-color, #fff); border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        label { font-size: 14px; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h3>Moderation Tools</h3>
-        <div class="row">
-            <span>Anti-Link</span>
-            <input type="checkbox" id="links">
+        <div class="switch-row">
+            <label>Anti-Link Protection</label>
+            <input type="checkbox" id="links" ${currentSettings?.antiLink ? 'checked' : ''}>
         </div>
-        <div class="row">
-            <span>Welcome Msg</span>
-            <input type="checkbox" id="welcome" checked>
-        </div>
+        
+        <label>Custom Welcome Message</label>
+        <input type="text" id="welcomeText" placeholder="e.g. Welcome to our group!" value="${currentSettings?.welcomeMsg || ''}">
+        <p style="font-size: 11px; color: gray;">Tip: Type {name} to tag the user.</p>
     </div>
-    <button class="footer-btn" onclick="saveSettings()">Apply Changes</button>
+    <button onclick="save()">Save All Settings</button>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.ready();
-        function saveSettings() {
+        function save() {
             const data = {
+                groupId: "${groupId}",
                 links: document.getElementById('links').checked,
-                welcome: document.getElementById('welcome').checked
+                welcomeMsg: document.getElementById('welcomeText').value
             };
             tg.sendData(JSON.stringify(data));
             tg.close();
@@ -56,53 +60,60 @@ const htmlContent = `
 </html>
 `;
 
-// --- 2. BACKEND: BOT LOGIC ---
+// --- Bot Logic ---
 
-bot.start((ctx) => {
-    // Ye URL automatic detect karega aapka Vercel link
-    const appUrl = "https://" + ctx.worker?.host || "your-vercel-domain.vercel.app";
-    ctx.reply('Hello Admin! Control this group visually:', 
-        Markup.inlineKeyboard([
-            Markup.button.webApp('Open Manager', appUrl)
-        ])
+// 1. New Member Welcome Logic
+bot.on('new_chat_members', async (ctx) => {
+    const database = await connectDB();
+    const setting = await database.collection('settings').findOne({ groupId: ctx.chat.id.toString() });
+
+    if (setting?.welcomeMsg) {
+        for (const member of ctx.message.new_chat_members) {
+            let msg = setting.welcomeMsg.replace('{name}', `[${member.first_name}](tg://user?id=${member.id})`);
+            await ctx.replyWithMarkdown(msg);
+        }
+    }
+});
+
+// 2. Settings command
+bot.command('settings', async (ctx) => {
+    if (ctx.chat.type === 'private') return ctx.reply("Please use this in a group.");
+    const webAppUrl = `https://${process.env.VERCEL_URL}?gid=${ctx.chat.id}`;
+    ctx.reply(`Admin Panel for ${ctx.chat.title}`, 
+        Markup.inlineKeyboard([Markup.button.webApp('⚙️ Settings', webAppUrl)])
     );
 });
 
-// Jab Mini App se data aaye
-bot.on('web_app_data', (ctx) => {
+// 3. WebApp Data Listener
+bot.on('web_app_data', async (ctx) => {
     const data = JSON.parse(ctx.webAppData.data.json());
-    ctx.reply(`✅ Updated:\n🔗 Links: ${data.links ? 'Blocked' : 'Allowed'}\n👋 Welcome: ${data.welcome ? 'ON' : 'OFF'}`);
+    const database = await connectDB();
+    await database.collection('settings').updateOne(
+        { groupId: data.groupId },
+        { $set: { antiLink: data.links, welcomeMsg: data.welcomeMsg } },
+        { upsert: true }
+    );
+    ctx.reply(`✅ Settings updated! Link Block: ${data.links ? 'ON' : 'OFF'}`);
 });
 
-// --- 3. VERCEL SERVERLESS HANDLER ---
+// 4. Anti-Link Logic
+bot.on('message', async (ctx, next) => {
+    const database = await connectDB();
+    const setting = await database.collection('settings').findOne({ groupId: ctx.chat.id.toString() });
+    if (setting?.antiLink && ctx.message.entities?.some(e => e.type === 'url')) {
+        await ctx.deleteMessage().catch(() => {});
+    }
+    return next();
+});
 
+// Vercel Handler
 module.exports = async (req, res) => {
-    const protocol = req.headers['x-forwarded-proto'] || 'https';
-    const host = req.headers['host'];
-    const fullUrl = `${protocol}://${host}`;
-
-    // A. SETUP ROUTE: browser mein /setup kholein
-    if (req.url.includes('/setup')) {
-        try {
-            await bot.telegram.setWebhook(`${fullUrl}/api`);
-            return res.status(200).send(`Webhook set to: ${fullUrl}/api`);
-        } catch (e) {
-            return res.status(500).send(`Error: ${e.message}`);
-        }
+    if (req.method === 'GET') {
+        const database = await connectDB();
+        const currentSettings = await database.collection('settings').findOne({ groupId: req.query.gid });
+        res.setHeader('Content-Type', 'text/html');
+        return res.send(getHtml(req.query.gid, currentSettings));
     }
-
-    // B. BOT UPDATE: Telegram POST requests
-    if (req.method === 'POST') {
-        try {
-            await bot.handleUpdate(req.body);
-            return res.status(200).send('OK');
-        } catch (err) {
-            console.error(err);
-            return res.status(500).send('Bot Error');
-        }
-    }
-
-    // C. FRONTEND: Normal browser visit
-    res.setHeader('Content-Type', 'text/html');
-    return res.status(200).send(htmlContent);
+    await bot.handleUpdate(req.body);
+    res.status(200).send('OK');
 };
