@@ -18,7 +18,6 @@ const getHtml = (groups, selectedGid, settings) => {
         return `<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><style>body{background:#1c1c1d;color:white;padding:20px;font-family:sans-serif;}.card{background:#2c2c2e;padding:15px;border-radius:12px;margin-bottom:10px;display:flex;justify-content:space-between;cursor:pointer;}.add-btn{background:#34c759;color:white;padding:15px;border-radius:12px;display:block;text-align:center;text-decoration:none;font-weight:bold;margin-top:20px;}</style><body><h2>My Chats</h2>${list}<a href="https://t.me/${process.env.BOT_USERNAME}?startgroup=true" class="add-btn">+ Add Group</a></body></html>`;
     }
 
-    // TOGGLE STATE SYNC: Directly from the 'settings' object fetched in the handler
     const isAntiLinkChecked = settings && settings.antiLink === true ? 'checked' : '';
 
     return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://telegram.org/js/telegram-web-app.js"></script></head>
@@ -59,7 +58,6 @@ const getHtml = (groups, selectedGid, settings) => {
                     links: document.getElementById('links').checked,
                     welcome: document.getElementById('welcome').value
                 };
-                // Method 2: POST directly to server to ensure database updates BEFORE closure
                 fetch('/api?save=true', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -72,7 +70,6 @@ const getHtml = (groups, selectedGid, settings) => {
     </body></html>`;
 };
 
-// --- Bot Logic ---
 bot.on('new_chat_members', async (ctx) => {
     const database = await connectDB();
     const config = await database.collection('settings').findOne({ groupId: ctx.chat.id.toString() });
@@ -98,19 +95,32 @@ bot.command('settings', (ctx) => {
     ]));
 });
 
-// --- Handler ---
 module.exports = async (req, res) => {
-    const database = await connectDB();
-    
-    // SAVE LOGIC (Direct from WebApp Fetch)
-    if (req.query.save === 'true' && req.method === 'POST') {
-        const { gid, links, welcome } = req.body;
-        await database.collection('settings').updateOne(
-            { groupId: gid },
-            { $set: { antiLink: Boolean(links), welcomeMsg: welcome } },
-            { upsert: true }
-        );
-        return res.status(200).json({ ok: true });
-    }
+    try {
+        const database = await connectDB();
+        
+        if (req.query.save === 'true' && req.method === 'POST') {
+            const { gid, links, welcome } = req.body;
+            await database.collection('settings').updateOne(
+                { groupId: gid },
+                { $set: { antiLink: Boolean(links), welcomeMsg: welcome } },
+                { upsert: true }
+            );
+            return res.status(200).json({ ok: true });
+        }
 
-    if (req.method ===
+        if (req.method === 'GET') {
+            const gid = req.query.gid;
+            res.setHeader('Content-Type', 'text/html');
+            const settings = gid ? await database.collection('settings').findOne({ groupId: gid }) : null;
+            const groups = !gid ? await database.collection('chats').find({ active: true }).toArray() : [];
+            return res.send(getHtml(groups, gid, settings));
+        }
+
+        await bot.handleUpdate(req.body);
+        res.status(200).send('OK');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Internal Server Error');
+    }
+};
