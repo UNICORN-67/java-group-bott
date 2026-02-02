@@ -12,7 +12,7 @@ async function connectDB() {
     return db;
 }
 
-// --- Frontend HTML (With Modern Toggles) ---
+// --- Frontend HTML (Fixed Toggle State) ---
 const getHtml = (groups, selectedGid, settings) => {
     if (!selectedGid) {
         // Dashboard View
@@ -20,27 +20,20 @@ const getHtml = (groups, selectedGid, settings) => {
             <div class="card" onclick="window.location.href='?gid=${g.groupId}'">
                 <div style="display:flex; align-items:center;">
                     <div class="icon">👥</div>
-                    <div><strong>${g.groupName || 'Unknown'}</strong></div>
+                    <div><strong>${g.groupName || 'Group'}</strong></div>
                 </div>
                 <span>❯</span>
             </div>
         `).join('');
-
-        return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>
-            body { font-family: sans-serif; background: #1c1c1d; color: white; padding: 20px; }
-            .card { background: #2c2c2e; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-            .icon { width: 40px; height: 40px; background: #007aff; border-radius: 50%; margin-right: 15px; display: flex; align-items: center; justify-content: center; }
-            .add-btn { background: #34c759; color: white; padding: 15px; border-radius: 12px; text-decoration: none; display: block; text-align: center; font-weight: bold; margin-top: 20px; }
-        </style><body><h2>Your Chats</h2>${groupList}<a href="https://t.me/${process.env.BOT_USERNAME}?startgroup=true" class="add-btn">+ Add Chat</a></body></html>`;
+        return `<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><style>body{font-family:sans-serif;background:#1c1c1d;color:white;padding:20px;}.card{background:#2c2c2e;padding:15px;border-radius:12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}.icon{width:40px;height:40px;background:#007aff;border-radius:50%;margin-right:15px;display:flex;align-items:center;justify-content:center;}.add-btn{background:#34c759;color:white;padding:15px;border-radius:12px;text-decoration:none;display:block;text-align:center;font-weight:bold;margin-top:20px;}</style><body><h2>Your Chats</h2>${groupList}<a href="https://t.me/${process.env.BOT_USERNAME}?startgroup=true" class="add-btn">+ Add Chat</a></body></html>`;
     }
 
-    // Settings View with Toggles
-    return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://telegram.org/js/telegram-web-app.js"></script>
+    // Settings View
+    return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://telegram.org/js/telegram-web-app.js"></script></head>
     <style>
         body { font-family: sans-serif; background: #1c1c1d; color: white; padding: 20px; }
-        .card { background: #2c2c2e; padding: 20px; border-radius: 15px; border: 1px solid #3a3a3c; }
+        .card { background: #2c2c2e; padding: 20px; border-radius: 15px; }
         .row { display: flex; justify-content: space-between; align-items: center; margin: 20px 0; }
-        /* Toggle Switch Style */
         .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #3a3a3c; transition: .4s; border-radius: 34px; }
@@ -56,7 +49,10 @@ const getHtml = (groups, selectedGid, settings) => {
             <h3>Management</h3>
             <div class="row">
                 <span>Anti-Link Protection</span>
-                <label class="switch"><input type="checkbox" id="links" ${settings?.antiLink ? 'checked' : ''}><span class="slider"></span></label>
+                <label class="switch">
+                    <input type="checkbox" id="links" ${settings?.antiLink === true ? 'checked' : ''}>
+                    <span class="slider"></span>
+                </label>
             </div>
             <div style="margin-top:20px;">
                 <label style="color:#aaa; font-size:12px;">Welcome Message</label>
@@ -80,43 +76,17 @@ const getHtml = (groups, selectedGid, settings) => {
 
 // --- Bot Logic ---
 
-bot.command('start', (ctx) => {
-    ctx.reply('Open Dashboard to manage chats:', Markup.inlineKeyboard([
-        Markup.button.webApp('📱 Dashboard', `https://${process.env.VERCEL_URL}`)
-    ]));
-});
-
-bot.command('settings', (ctx) => {
-    ctx.reply('⚙️ Group Settings:', Markup.inlineKeyboard([
-        Markup.button.webApp('Open Panel', `https://${process.env.VERCEL_URL}?gid=${ctx.chat.id}`)
-    ]));
-});
-
 bot.on('web_app_data', async (ctx) => {
     const data = JSON.parse(ctx.webAppData.data.json());
     const database = await connectDB();
     await database.collection('settings').updateOne(
         { groupId: data.groupId },
-        { $set: { antiLink: data.links, welcomeMsg: data.welcomeMsg } },
+        { $set: { antiLink: Boolean(data.links), welcomeMsg: data.welcomeMsg } },
         { upsert: true }
     );
-    ctx.reply(`✅ Settings updated!`);
+    ctx.reply(`✅ Updated: Anti-Link is now ${data.links ? 'ON' : 'OFF'}`);
 });
 
-// Update Database when added to new group
-bot.on('my_chat_member', async (ctx) => {
-    const database = await connectDB();
-    const status = ctx.myChatMember.new_chat_member.status;
-    if (status === 'administrator' || status === 'member') {
-        await database.collection('chats').updateOne(
-            { groupId: ctx.chat.id.toString() },
-            { $set: { groupName: ctx.chat.title, active: true } },
-            { upsert: true }
-        );
-    }
-});
-
-// Welcome message logic
 bot.on('new_chat_members', async (ctx) => {
     const database = await connectDB();
     const config = await database.collection('settings').findOne({ groupId: ctx.chat.id.toString() });
@@ -127,33 +97,35 @@ bot.on('new_chat_members', async (ctx) => {
     }
 });
 
-// Anti-link Logic
 bot.on('message', async (ctx, next) => {
     if (ctx.chat.type === 'private') return next();
     const database = await connectDB();
     const config = await database.collection('settings').findOne({ groupId: ctx.chat.id.toString() });
-    if (config?.antiLink && ctx.message.entities?.some(e => e.type === 'url' || e.type === 'text_link')) {
+    
+    // Check for links
+    if (config?.antiLink === true && ctx.message.entities?.some(e => e.type === 'url' || e.type === 'text_link')) {
         await ctx.deleteMessage().catch(() => {});
     }
     return next();
 });
 
-// --- Vercel Export ---
+// Setup & Commands
+bot.command('settings', (ctx) => {
+    ctx.reply('⚙️ Management Panel:', Markup.inlineKeyboard([
+        Markup.button.webApp('Open Settings', `https://${process.env.VERCEL_URL}?gid=${ctx.chat.id}`)
+    ]));
+});
+
+// Vercel Handler
 module.exports = async (req, res) => {
     const database = await connectDB();
     if (req.method === 'GET') {
         const gid = req.query.gid;
         res.setHeader('Content-Type', 'text/html');
-        if (gid) {
-            const settings = await database.collection('settings').findOne({ groupId: gid });
-            return res.send(getHtml(null, gid, settings));
-        } else {
-            const groups = await database.collection('chats').find({ active: true }).toArray();
-            return res.send(getHtml(groups, null, null));
-        }
+        const settings = gid ? await database.collection('settings').findOne({ groupId: gid }) : null;
+        const groups = !gid ? await database.collection('chats').find({ active: true }).toArray() : [];
+        return res.send(getHtml(groups, gid, settings));
     }
-    if (req.method === 'POST') {
-        await bot.handleUpdate(req.body);
-        return res.status(200).send('OK');
-    }
+    await bot.handleUpdate(req.body);
+    res.status(200).send('OK');
 };
