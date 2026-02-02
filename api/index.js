@@ -12,18 +12,36 @@ async function connectDB() {
     return db;
 }
 
-const getHtml = (groups, selectedGid, settings) => {
+// --- Admin Check Function ---
+async function isAdmin(ctx) {
+    if (ctx.chat.type === 'private') return true;
+    try {
+        const member = await ctx.getChatMember(ctx.from.id);
+        return ['administrator', 'creator'].includes(member.status);
+    } catch (e) { return false; }
+}
+
+// --- Frontend HTML with Admin List ---
+const getHtml = (groups, selectedGid, settings, admins = []) => {
     if (!selectedGid) {
         let list = groups.map(g => `<div class="card" onclick="location.href='?gid=${g.groupId}'"><span>👥 ${g.groupName || 'Group'}</span><span>❯</span></div>`).join('');
         return `<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><style>body{background:#1c1c1d;color:white;padding:20px;font-family:sans-serif;}.card{background:#2c2c2e;padding:15px;border-radius:12px;margin-bottom:10px;display:flex;justify-content:space-between;cursor:pointer;}.add-btn{background:#34c759;color:white;padding:15px;border-radius:12px;display:block;text-align:center;text-decoration:none;font-weight:bold;margin-top:20px;}</style><body><h2>My Chats</h2>${list}<a href="https://t.me/${process.env.BOT_USERNAME}?startgroup=true" class="add-btn">+ Add Group</a></body></html>`;
     }
 
     const isAntiLinkChecked = settings && settings.antiLink === true ? 'checked' : '';
+    
+    // Admin list HTML
+    let adminHtml = admins.map(a => `
+        <div style="display:flex; align-items:center; margin-bottom:10px; background:#3a3a3c; padding:10px; border-radius:10px;">
+            <div style="width:35px; height:35px; background:#555; border-radius:50%; margin-right:12px; display:flex; align-items:center; justify-content:center; font-size:12px;">👤</div>
+            <span>${a.user.first_name} ${a.status === 'creator' ? '👑' : '🛡️'}</span>
+        </div>
+    `).join('');
 
     return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://telegram.org/js/telegram-web-app.js"></script></head>
     <style>
         body { font-family: sans-serif; background: #1c1c1d; color: white; padding: 20px; }
-        .card { background: #2c2c2e; padding: 20px; border-radius: 15px; }
+        .card { background: #2c2c2e; padding: 20px; border-radius: 15px; margin-bottom: 15px; }
         .row { display: flex; justify-content: space-between; align-items: center; margin: 20px 0; }
         .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -33,6 +51,7 @@ const getHtml = (groups, selectedGid, settings) => {
         input:checked + .slider:before { transform: translateX(24px); }
         input[type="text"] { width: 100%; padding: 12px; border-radius: 10px; border: none; background: #3a3a3c; color: white; margin-top: 10px; box-sizing: border-box; }
         .save-btn { background: #007aff; color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-weight: bold; margin-top: 20px; cursor: pointer; }
+        h4 { color: #aaa; margin-bottom: 10px; text-transform: uppercase; font-size: 12px; }
     </style>
     <body>
         <a href="/" style="color:#007aff; text-decoration:none;">❮ Back</a>
@@ -40,17 +59,20 @@ const getHtml = (groups, selectedGid, settings) => {
             <h3>Management</h3>
             <div class="row">
                 <span>Anti-Link Protection</span>
-                <label class="switch">
-                    <input type="checkbox" id="links" ${isAntiLinkChecked}>
-                    <span class="slider"></span>
-                </label>
+                <label class="switch"><input type="checkbox" id="links" ${isAntiLinkChecked}><span class="slider"></span></label>
             </div>
             <div style="margin-top:20px;">
                 <label style="color:#aaa; font-size:12px;">Welcome Message</label>
                 <input type="text" id="welcome" value="${settings?.welcomeMsg || ''}" placeholder="Welcome {name}!">
             </div>
+            <button class="save-btn" onclick="save()">Save Settings</button>
         </div>
-        <button class="save-btn" onclick="save()">Save All Settings</button>
+
+        <div class="card">
+            <h4>Group Admins</h4>
+            ${adminHtml}
+        </div>
+
         <script>
             function save() {
                 const data = {
@@ -62,14 +84,13 @@ const getHtml = (groups, selectedGid, settings) => {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(data)
-                }).then(() => {
-                    window.Telegram.WebApp.close();
-                });
+                }).then(() => { window.Telegram.WebApp.close(); });
             }
         </script>
     </body></html>`;
 };
 
+// --- Bot Handlers ---
 bot.on('new_chat_members', async (ctx) => {
     const database = await connectDB();
     const config = await database.collection('settings').findOne({ groupId: ctx.chat.id.toString() });
@@ -80,6 +101,7 @@ bot.on('new_chat_members', async (ctx) => {
 
 bot.on('message', async (ctx, next) => {
     if (ctx.chat.type === 'private') return next();
+    if (await isAdmin(ctx)) return next();
     const database = await connectDB();
     const config = await database.collection('settings').findOne({ groupId: ctx.chat.id.toString() });
     if (config?.antiLink === true && ctx.message.entities?.some(e => e.type === 'url' || e.type === 'text_link')) {
@@ -89,7 +111,8 @@ bot.on('message', async (ctx, next) => {
     return next();
 });
 
-bot.command('settings', (ctx) => {
+bot.command('settings', async (ctx) => {
+    if (!(await isAdmin(ctx))) return ctx.reply("❌ Admins only!");
     ctx.reply('⚙️ Manage Group:', Markup.inlineKeyboard([
         Markup.button.webApp('Open Panel', `https://${process.env.VERCEL_URL}?gid=${ctx.chat.id}`)
     ]));
@@ -98,7 +121,6 @@ bot.command('settings', (ctx) => {
 module.exports = async (req, res) => {
     try {
         const database = await connectDB();
-        
         if (req.query.save === 'true' && req.method === 'POST') {
             const { gid, links, welcome } = req.body;
             await database.collection('settings').updateOne(
@@ -108,19 +130,18 @@ module.exports = async (req, res) => {
             );
             return res.status(200).json({ ok: true });
         }
-
         if (req.method === 'GET') {
             const gid = req.query.gid;
             res.setHeader('Content-Type', 'text/html');
             const settings = gid ? await database.collection('settings').findOne({ groupId: gid }) : null;
+            let admins = [];
+            if (gid) {
+                try { admins = await bot.telegram.getChatAdministrators(gid); } catch (e) {}
+            }
             const groups = !gid ? await database.collection('chats').find({ active: true }).toArray() : [];
-            return res.send(getHtml(groups, gid, settings));
+            return res.send(getHtml(groups, gid, settings, admins));
         }
-
         await bot.handleUpdate(req.body);
         res.status(200).send('OK');
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Internal Server Error');
-    }
+    } catch (err) { res.status(500).send('Error'); }
 };
