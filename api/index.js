@@ -12,6 +12,16 @@ const blacklistedWords = [
     'poda', 'behen k lode', 'gandu', 'mkl', 'bkl', 'tatte', 'jhant'
 ];
 
+// --- HELPERS ---
+const escapeHTML = (str) => {
+    if (!str) return "";
+    return str.replace(/[&<>]/g, (tag) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;'
+    }[tag] || tag));
+};
+
 async function connectDB() {
     if (db) return db;
     const client = new MongoClient(process.env.MONGO_URI);
@@ -20,19 +30,20 @@ async function connectDB() {
     return db;
 }
 
-// --- GHOST MODE HELPERS ---
 const fullClean = async (ctx, botMsgId, timer = 10000) => {
-    try { await ctx.deleteMessage(); } catch (e) {}
+    try { await ctx.deleteMessage().catch(() => {}); } catch (e) {}
     setTimeout(async () => {
-        try { await ctx.telegram.deleteMessage(ctx.chat.id, botMsgId); } catch (e) {}
+        try { await ctx.telegram.deleteMessage(ctx.chat.id, botMsgId).catch(() => {}); } catch (e) {}
     }, timer);
 };
 
 const ghostReply = async (ctx, text, timer = 5000) => {
-    const m = await ctx.reply(text);
-    setTimeout(() => {
-        ctx.telegram.deleteMessage(ctx.chat.id, m.message_id).catch(e => {});
-    }, timer);
+    const m = await ctx.reply(text, { parse_mode: 'HTML' }).catch(() => {});
+    if (m) {
+        setTimeout(() => {
+            ctx.telegram.deleteMessage(ctx.chat.id, m.message_id).catch(() => {});
+        }, timer);
+    }
 };
 
 async function isAdmin(ctx) {
@@ -43,7 +54,7 @@ async function isAdmin(ctx) {
     } catch (e) { return false; }
 }
 
-// --- SILENT BIO-LINK SCANNER & WELCOME ---
+// --- LOGIC: SILENT BIO SCAN & WELCOME ---
 bot.on('new_chat_members', async (ctx) => {
     const newUser = ctx.from;
     try {
@@ -52,50 +63,44 @@ bot.on('new_chat_members', async (ctx) => {
         const linkPattern = /(https?:\/\/|t\.me|www\.|[a-zA-Z0-9-]+\.[a-zA-Z]{2,})/;
 
         if (linkPattern.test(bio)) {
-            await ctx.banChatMember(newUser.id);
-            await ctx.deleteMessage(); 
+            await ctx.banChatMember(newUser.id).catch(() => {});
+            await ctx.deleteMessage().catch(() => {}); 
             return; 
         }
 
-        const m = await ctx.reply(`Welcome ${newUser.first_name} to the Sector! 🚀\nKeep it clean.`);
-        setTimeout(() => {
-            ctx.telegram.deleteMessage(ctx.chat.id, m.message_id).catch(e => {});
-        }, 30000);
+        const safeName = escapeHTML(newUser.first_name);
+        const m = await ctx.reply(`<b>Welcome ${safeName} to the Sector!</b> 🚀\nKeep it clean.`, { parse_mode: 'HTML' });
+        setTimeout(() => ctx.telegram.deleteMessage(ctx.chat.id, m.message_id).catch(() => {}), 30000);
     } catch (e) {}
 });
 
-// --- HEAVY WORD FILTER ---
+// --- LOGIC: WORD FILTER ---
 bot.on('text', async (ctx, next) => {
-    if (ctx.chat.type === 'private') return next();
+    if (ctx.chat.type === 'private' || !ctx.message.text) return next();
     const msgText = ctx.message.text.toLowerCase();
     const hasBadWord = blacklistedWords.some(word => msgText.includes(word));
 
     if (hasBadWord && !(await isAdmin(ctx))) {
-        await ctx.deleteMessage();
-        return ghostReply(ctx, `⚠️ No abusive language, ${ctx.from.first_name}!`);
+        await ctx.deleteMessage().catch(() => {});
+        return ghostReply(ctx, `⚠️ <b>No abusive language, ${escapeHTML(ctx.from.first_name)}!</b>`);
     }
     return next();
 });
 
-// --- COMMANDS (AUTO-CLEAN) ---
+// --- COMMANDS ---
 bot.command('ping', async (ctx) => {
     const start = Date.now();
-    const m = await ctx.reply('🛰️ Scanning...');
+    const m = await ctx.reply('🛰️ <b>Scanning...</b>', { parse_mode: 'HTML' });
     const diff = Date.now() - start;
-    await ctx.telegram.editMessageText(ctx.chat.id, m.message_id, null, `🏓 **Pong!**\n⏱️ Speed: \`${diff}ms\``, { parse_mode: 'Markdown' });
+    await ctx.telegram.editMessageText(ctx.chat.id, m.message_id, null, `🏓 <b>Pong!</b>\n⏱️ Speed: <code>${diff}ms</code>`, { parse_mode: 'HTML' }).catch(() => {});
     fullClean(ctx, m.message_id);
-});
-
-bot.command('speed', async (ctx) => {
-    if (ctx.chat.type !== 'private') return;
-    const m = await ctx.reply('🚀 **Speed:** 1.2GB/s\n✅ All Systems Operational.');
-    setTimeout(() => ctx.telegram.deleteMessage(ctx.chat.id, m.message_id), 10000);
 });
 
 bot.command('info', async (ctx) => {
     if (ctx.chat.type === 'private') return;
     let target = ctx.message.reply_to_message ? ctx.message.reply_to_message.from : ctx.from;
-    const msg = await ctx.reply(`👤 **IDENTITY:**\n🆔 ID: \`${target.id}\`\n📛 Name: ${target.first_name}`, { parse_mode: 'Markdown' });
+    const safeName = escapeHTML(target.first_name);
+    const msg = await ctx.reply(`👤 <b>IDENTITY:</b>\n🆔 <b>ID:</b> <code>${target.id}</code>\n📛 <b>Name:</b> ${safeName}`, { parse_mode: 'HTML' });
     fullClean(ctx, msg.message_id);
 });
 
@@ -103,56 +108,45 @@ bot.command(['ban', 'mute', 'unmute'], async (ctx) => {
     if (ctx.chat.type === 'private' || !(await isAdmin(ctx))) return;
     const cmd = ctx.message.text.split(' ')[0].replace('/', '');
     const target = ctx.message.reply_to_message;
-    if (!target) return ghostReply(ctx, "⚠️ Reply to a user!", 5000);
+    if (!target) return ghostReply(ctx, "⚠️ <b>Reply to a user!</b>", 5000);
 
     try {
         if (cmd === 'ban') await ctx.banChatMember(target.from.id);
         if (cmd === 'mute') await ctx.restrictChatMember(target.from.id, { permissions: { can_send_messages: false } });
         if (cmd === 'unmute') await ctx.restrictChatMember(target.from.id, { permissions: { can_send_messages: true } });
-        const res = await ctx.reply(`✅ Protocol ${cmd.toUpperCase()} set for ${target.from.first_name}`);
+        const res = await ctx.reply(`✅ <b>Protocol ${cmd.toUpperCase()} Success:</b> ${escapeHTML(target.from.first_name)}`, { parse_mode: 'HTML' });
         fullClean(ctx, res.message_id);
-    } catch (e) { ghostReply(ctx, "❌ Error: High-level override failed."); }
+    } catch (e) { ghostReply(ctx, "❌ <b>Error: Override failed.</b>"); }
 });
 
-// --- DASHBOARD UI (NEON) ---
+// --- DASHBOARD UI ---
 const getHtml = (groups, selectedGid, members = [], chatInfo = null, leaderboard = []) => {
     const style = `<style>
         :root { --neon: #00f2ff; --purple: #bc13fe; --bg: #0a0a0c; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; padding: 15px; margin: 0; }
-        .group-header { padding: 20px; background: linear-gradient(135deg, rgba(0,242,255,0.1), rgba(188,19,254,0.1)); border-radius: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        .header { padding: 20px; background: linear-gradient(135deg, rgba(0,242,255,0.1), rgba(188,19,254,0.1)); border-radius: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
         .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 15px; padding: 10px; margin-top: 15px; }
-        .user-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .btn { background: var(--neon); color: black; border: none; padding: 5px 10px; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 10px; }
-        .rank-item { display: flex; justify-content: space-between; padding: 10px; background: rgba(188,19,254,0.05); border-radius: 10px; margin-bottom: 5px; }
+        .row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
     </style>`;
 
     if (!selectedGid) {
-        let list = groups.map(g => `<div class="user-row" onclick="location.href='?gid=${g.groupId}'">💎 ${g.groupName} <span>❯</span></div>`).join('');
-        return `<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0">${style}</head><body><h2>YURI TERMINAL</h2><div class="card">${list}</div></body></html>`;
+        let list = groups.map(g => `<div class="row" onclick="location.href='?gid=${g.groupId}'">💎 ${escapeHTML(g.groupName)} <span>❯</span></div>`).join('');
+        return `<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0">${style}</head><body><h2>YURI TERMINAL</h2><div class="card">${list || 'No Clusters'}</div></body></html>`;
     }
 
     return `<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://telegram.org/js/telegram-web-app.js"></script>${style}</head>
     <body>
-        <div class="group-header">
-            <h3>${chatInfo?.title || 'System'}</h3>
-            <span style="color:var(--neon)">Members: ${chatInfo?.members_count || 'N/A'}</span>
+        <div class="header">
+            <h3>${escapeHTML(chatInfo?.title || 'System')}</h3>
+            <span style="color:var(--neon)">Population: ${chatInfo?.members_count || 'N/A'}</span>
         </div>
         <div class="card">
-            <h4 style="margin:0 0 10px 0; font-size:12px;">🏆 DAILY LEADERBOARD</h4>
-            ${leaderboard.map((u, i) => `<div class="rank-item"><span>#${i+1} ${u.name}</span> <span style="color:var(--neon)">${u.count} MSG</span></div>`).join('') || 'No data'}
-        </div>
-        <div class="card">
-            <h4 style="margin:0 0 10px 0; font-size:12px;">👥 RECENT MEMBERS</h4>
-            ${members.filter(m => m.status !== 'creator').map(m => `
-                <div class="user-row">
-                    <span>${m.user.first_name}<br><small style="color:#666">ID: ${m.user.id}</small></span>
-                    <button class="btn" onclick="action('ban', '${m.user.id}')">BAN</button>
-                </div>`).join('')}
+            <h4 style="margin:0;">🏆 LEADERBOARD</h4>
+            ${leaderboard.map((u, i) => `<div class="row"><span>#${i+1} ${escapeHTML(u.name)}</span> <b>${u.count}</b></div>`).join('') || 'No data'}
         </div>
         <script>
             function action(type, uid) {
-                fetch('/api?action=' + type, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ gid: "${selectedGid}", uid: uid }) })
-                .then(() => location.reload());
+                fetch('/api?action=' + type, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ gid: "${selectedGid}", uid: uid }) }).then(() => location.reload());
             }
         </script>
     </body></html>`;
@@ -164,11 +158,11 @@ module.exports = async (req, res) => {
 
     if (req.method === 'POST' && req.body.message) {
         const msg = req.body.message;
-        if (msg.chat && msg.chat.type !== 'private') {
+        if (msg.chat && msg.chat.type !== 'private' && msg.from) {
             const today = new Date().toISOString().split('T')[0];
             await database.collection('activity').updateOne(
                 { gid: msg.chat.id.toString(), uid: msg.from.id.toString(), date: today },
-                { $set: { name: msg.from.first_name }, $inc: { count: 1 } },
+                { $set: { name: escapeHTML(msg.from.first_name) }, $inc: { count: 1 } },
                 { upsert: true }
             );
         }
@@ -176,7 +170,7 @@ module.exports = async (req, res) => {
 
     if (req.query.action && req.method === 'POST') {
         const { gid, uid } = req.body;
-        if (req.query.action === 'ban') await bot.telegram.banChatMember(gid, uid);
+        if (req.query.action === 'ban') await bot.telegram.banChatMember(gid, uid).catch(() => {});
         return res.json({ ok: true });
     }
 
