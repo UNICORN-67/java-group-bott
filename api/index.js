@@ -108,14 +108,46 @@ bot.command(['ping', 'speed', 'leaderboard'], async (ctx) => {
     const cmd = ctx.message.text.split(' ')[0].replace('/', '');
     const db = await connectDB();
     
-    if (cmd === 'leaderboard') {
-        const top = await db.collection('activity').find({ gid: ctx.chat.id.toString() }).limit(10).toArray();
-        let res = `🏆 <b>ʟᴇᴀᴅᴇʀʙᴏᴀʀᴅ</b>\n\n` + top.map((u, i) => `${i<3?['🥇','🥈','🥉'][i]:'👤'} ${u.name}`).join('\n');
-        return fullClean(ctx, (await ctx.reply(res, { parse_mode: 'HTML' })).message_id, 30000);
-    }
+    bot.command('leaderboard', async (ctx) => {
+    if (ctx.from.id !== OWNER_ID) return; // Only Owner check
     
-    const start = Date.now();
-    const m = await ctx.reply('🚀 <i>Testing...</i>', { parse_mode: 'HTML' });
+    const db = await connectDB();
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Fetching top 10 chatters for today
+    const top = await db.collection('activity')
+        .find({ gid: ctx.chat.id.toString(), date: today })
+        .sort({ count: -1 })
+        .limit(10)
+        .toArray();
+    
+    if (top.length === 0) {
+        return ctx.reply("📉 <b>Leaderboard Khali Hai!</b>\nAbhi tak kisi ne chat nahi ki.", { parse_mode: 'HTML' });
+    }
+
+    let res = `📊 <b>ᴛᴏᴅᴀʏ's ᴄʜᴀᴛ ʟᴇᴀᴅᴇʀʙᴏᴀʀᴅ</b>\n`;
+    res += `━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+    top.forEach((u, i) => {
+        let badge = "";
+        if (i === 0) badge = "🥇 <i>The King</i>";
+        else if (i === 1) badge = "🥈 <i>The Pro</i>";
+        else if (i === 2) badge = "🥉 <i>The Active</i>";
+        else badge = `👤 #${i + 1}`;
+
+        res += `${badge}\n└─ <b>${escapeHTML(u.name)}</b> — <code>${u.count} msgs</code>\n\n`;
+    });
+
+    res += `━━━━━━━━━━━━━━━━━━━━\n`;
+    res += `🔥 <b>Total Active Members:</b> <code>${top.length}</code>\n`;
+    res += `📅 <b>Date:</b> <code>${today}</code>`;
+
+    const m = await ctx.reply(res, { parse_mode: 'HTML' });
+    
+    // Owner ke liye hai toh auto-clean thoda lamba rakhte hain (45 sec)
+    fullClean(ctx, m.message_id, 45000);
+});
+
     ctx.telegram.editMessageText(ctx.chat.id, m.message_id, null, `⚡ <b>Ping:</b> ${Date.now()-start}ms`, { parse_mode: 'HTML' });
     fullClean(ctx, m.message_id);
 });
