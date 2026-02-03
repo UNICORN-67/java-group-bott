@@ -11,7 +11,7 @@ let taggingProcess = {};
 const OWNER_ID = parseInt(process.env.OWNER_ID);
 const LOG_CHANNEL = process.env.LOG_CHANNEL_ID;
 
-// YAML Config Loader
+// --- YAML Content Loader ---
 let config = { commands: {}, messages: {} };
 try {
     const yamlPath = path.join(__dirname, '..', 'commands.yml');
@@ -26,7 +26,7 @@ const getMsg = (key, data = {}) => {
     return msg;
 };
 
-// --- DB & ADMIN HELPERS ---
+// --- Database Connection ---
 async function connectDB() {
     if (db) return db;
     const client = new MongoClient(process.env.MONGO_URI);
@@ -45,14 +45,46 @@ async function isAdmin(ctx) {
     } catch (e) { return false; }
 }
 
-// --- CORE HANDLER ---
+// --- Auto-Clean Background Task ---
+async function cleanOldMedia(gid, hours = 6) {
+    const database = await connectDB();
+    const threshold = new Date(Date.now() - hours * 60 * 60 * 1000);
+    const riskyMsgs = await database.collection('media_logs').find({
+        gid: gid,
+        timestamp: { $lt: threshold }
+    }).toArray();
+
+    for (const msg of riskyMsgs) {
+        await bot.telegram.deleteMessage(msg.gid, msg.mid).catch(() => {});
+        await database.collection('media_logs').deleteOne({ _id: msg._id });
+    }
+}
+
+// --- Main Security & Interaction Handler ---
 bot.on('message', async (ctx, next) => {
     if (!ctx.message || ctx.chat.type === 'private') return next();
-    const { text, from, chat, entities } = ctx.message;
+    const { text, from, chat, entities, message_id } = ctx.message;
     const database = await connectDB();
     const name = escapeHTML(from.first_name);
+    const gid = chat.id.toString();
 
-    // 1. Bio & Anti-Link Security
+    // 1. Media Tracking (For Auto-Clean Copyright Protection)
+    if (ctx.message.photo || ctx.message.video || ctx.message.document || ctx.message.audio) {
+        await database.collection('media_logs').insertOne({
+            mid: message_id,
+            gid: gid,
+            timestamp: new Date()
+        });
+    }
+
+    // 2. Anti-Mass Report & Banned Keywords
+    const risky = [/report/i, /copyright/i, /raid/i, /abuse/i, /porn/i];
+    if (text && risky.some(rx => rx.test(text)) && !(await isAdmin(ctx))) {
+        await ctx.deleteMessage().catch(() => {});
+        return;
+    }
+
+    // 3. Bio Link Remover
     try {
         if (!(await isAdmin(ctx))) {
             const user = await ctx.telegram.getChat(from.id);
@@ -60,13 +92,16 @@ bot.on('message', async (ctx, next) => {
                 await ctx.deleteMessage().catch(() => {});
                 return ctx.reply(getMsg('bio_warn', { name }), { parse_mode: 'HTML' });
             }
-            if (entities?.some(e => e.type === 'url')) {
-                return await ctx.deleteMessage().catch(() => {});
-            }
         }
     } catch (e) {}
 
-    // 2. AFK Logic
+    // 4. Anti-Link
+    if (entities?.some(e => e.type === 'url') && !(await isAdmin(ctx))) {
+        await ctx.deleteMessage().catch(() => {});
+        return;
+    }
+
+    // 5. AFK System
     if (entities) {
         for (const ent of entities) {
             if (ent.type === 'text_mention') {
@@ -81,10 +116,24 @@ bot.on('message', async (ctx, next) => {
         ctx.reply(getMsg('afk_back', { name }), { parse_mode: 'HTML' });
     }
 
+    // 6. Activity Tracking & AI
+    if (text && !text.startsWith('/')) {
+        const today = new Date().toISOString().split('T')[0];
+        await database.collection('activity').updateOne({ gid, uid: from.id.toString(), date: today }, { $set: { name }, $inc: { count: 1 } }, { upsert: true });
+        
+        if (text.toLowerCase().includes('yuri') || Math.random() < 0.15) {
+            const aiRes = await axios.post('https://api.openai.com/v1/chat/completions', {
+                model: "gpt-3.5-turbo",
+                messages: [{ role: "system", content: "You are Yuri, a witty girl. Use natural Hinglish." }, { role: "user", content: text }],
+                max_tokens: 60
+            }, { headers: { 'Authorization': `Bearer ${process.env.OPENAI_API_KEY}` } }).catch(() => null);
+            if (aiRes) ctx.reply(aiRes.data.choices[0].message.content, { reply_to_message_id: message_id });
+        }
+    }
     return next();
 });
 
-// --- COMMANDS ---
+// --- Commands Section ---
 bot.start((ctx) => ctx.reply(getMsg('welcome'), { parse_mode: 'HTML' }));
 
 bot.help((ctx) => {
@@ -93,8 +142,21 @@ bot.help((ctx) => {
     ctx.reply(help, { parse_mode: 'HTML' });
 });
 
-// --- ADMIN SYSTEM (BAN, UNBAN, MUTE, UNMUTE, PIN, UNPIN, PURGE) ---
-bot.command(['ban', 'unban', 'mute', 'unmute', 'pin', 'unpin', 'purge', 'tagall', 'cancel'], async (ctx) => {
+bot.command('afk', async (ctx) => {
+    const reason = ctx.message.text.split(' ').slice(1).join(' ') || "Busy!";
+    const db = await connectDB();
+    await db.collection('afk').updateOne({ uid: ctx.from.id.toString() }, { $set: { name: ctx.from.first_name, reason } }, { upsert: true });
+    ctx.reply(getMsg('afk_set', { name: ctx.from.first_name, reason }), { parse_mode: 'HTML' });
+});
+
+bot.command('autoclean', async (ctx) => {
+    if (!(await isAdmin(ctx))) return;
+    const hours = parseInt(ctx.message.text.split(' ')[1]) || 6;
+    setInterval(() => cleanOldMedia(ctx.chat.id.toString(), hours), 60 * 60 * 1000);
+    ctx.reply(getMsg('clean_start', { hours }), { parse_mode: 'HTML' });
+});
+
+bot.command(['ban', 'unban', 'mute', 'unmute', 'pin', 'unpin', 'purge', 'tagall'], async (ctx) => {
     if (!(await isAdmin(ctx))) return;
     const cmd = ctx.message.text.split(' ')[0].replace('/', '');
     const target = ctx.message.reply_to_message;
@@ -111,24 +173,22 @@ bot.command(['ban', 'unban', 'mute', 'unmute', 'pin', 'unpin', 'purge', 'tagall'
         return;
     }
 
-    if (cmd === 'cancel') { taggingProcess[ctx.chat.id] = false; return; }
-    if (cmd === 'unpin') return await ctx.unpinChatMessage().catch(() => {});
-
     if (target) {
         try {
             const tid = target.from.id;
             if (cmd === 'ban') await ctx.banChatMember(tid);
             if (cmd === 'unban') await ctx.unbanChatMember(tid);
             if (cmd === 'mute') await ctx.restrictChatMember(tid, { permissions: { can_send_messages: false } });
-            if (cmd === 'unmute') await ctx.restrictChatMember(tid, { permissions: { can_send_messages: true, can_send_media_messages: true, can_send_polls: true, can_send_other_messages: true, can_add_web_page_previews: true } });
+            if (cmd === 'unmute') await ctx.restrictChatMember(tid, { permissions: { can_send_messages: true, can_send_media_messages: true, can_send_other_messages: true, can_add_web_page_previews: true } });
             if (cmd === 'pin') await ctx.pinChatMessage(target.message_id);
+            if (cmd === 'unpin') await ctx.unpinChatMessage(target.message_id);
             if (cmd === 'purge') {
                 for (let i = target.message_id; i <= ctx.message.message_id; i++) {
                     await ctx.telegram.deleteMessage(ctx.chat.id, i).catch(() => {});
                 }
             }
-            if (LOG_CHANNEL) bot.telegram.sendMessage(LOG_CHANNEL, `🛡️ <b>ᴀᴄᴛɪᴏɴ:</b> ${cmd.toUpperCase()}\n👤 <b>ᴀᴅᴍɪɴ:</b> ${ctx.from.first_name}\n🎯 <b>ᴛᴀʀɢᴇᴛ:</b> ${target.from.first_name}`, { parse_mode: 'HTML' });
-        } catch (e) { console.error(e); }
+            if (LOG_CHANNEL) bot.telegram.sendMessage(LOG_CHANNEL, `🛡️ ᴀᴄᴛɪᴏɴ: ${cmd.toUpperCase()}\n👤 ᴀᴅᴍɪɴ: ${ctx.from.first_name}\n🎯 ᴛᴀʀɢᴇᴛ: ${target.from.first_name}`);
+        } catch (e) {}
     }
 });
 
