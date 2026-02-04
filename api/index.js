@@ -50,10 +50,11 @@ const checkAdmin = async (ctx) => {
 
 bot.start((ctx) => ctx.reply(getMsg('welcome'), { parse_mode: 'HTML' }));
 
-// Sudo & Broadcast Commands (Starts with ! or /broadcast)
+// Sudo & Broadcast Logic in index.js
 bot.on('message', async (ctx, next) => {
     if (ctx.message.text && (ctx.message.text.startsWith('!') || ctx.message.text.startsWith('/broadcast'))) {
         const database = await connectDB();
+        // Master Sudo Handler ko call karein
         await sudoHandler(ctx, database, OWNER_ID);
         return; 
     }
