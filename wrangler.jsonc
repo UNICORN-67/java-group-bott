@@ -1,0 +1,5 @@
+{
+  "name": "java-group-bott",
+  "compatibility_date": "2026-02-04",
+  "main": "api/index.js"
+}
