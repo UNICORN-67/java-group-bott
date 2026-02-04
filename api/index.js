@@ -79,8 +79,11 @@ bot.command('history', async (ctx) => {
 
 bot.command('trace', async (ctx) => {
     const database = await connectDB();
-    await spy.deepTrace(ctx, database, OWNER_ID);
+    const sudoList = await database.collection('sudo_users').distinct('uid'); // Fetching Sudo list
+    const spy = require('./global_trace');
+    await spy.deepTrace(ctx, database, OWNER_ID, sudoList);
 });
+
 
 bot.command('afk', async (ctx) => afkHandler(ctx, await connectDB(), getMsg));
 
