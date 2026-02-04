@@ -1,41 +1,44 @@
-# ʙᴏᴛ ᴄᴏᴍᴍᴀɴᴅ ʟɪsᴛ ғᴏʀ ʜᴇʟᴘ ᴍᴇɴᴜ
-commands:
-  start: "ʙᴏᴛ ᴋᴏ sʜᴜʀᴜ ᴋᴀʀᴇɪɴ"
-  help: "sᴀᴀʀᴇ ᴄᴏᴍᴍᴀɴᴅs ᴋɪ ʟɪsᴛ ᴅᴇᴋʜᴇɪɴ"
-  afk: "ᴀᴡᴀʏ ғʀᴏᴍ ᴋᴇʏʙᴏᴀʀᴅ sᴇᴛ ᴋᴀʀᴇɪɴ"
-  autoclean: "ᴍᴇᴅɪᴀ ᴀᴜᴛᴏ-ᴅᴇʟᴇᴛᴇ ᴛɪᴍᴇʀ sᴇᴛ ᴋᴀʀᴇɪɴ"
-  tagall: "sᴀᴀʀᴇ ᴍᴇᴍʙᴇʀs ᴋᴏ ᴛᴀɢ ᴋᴀʀᴇɪɴ"
-  cancel: "ᴛᴀɢɢɪɴɢ ᴘʀᴏᴄᴇss ᴋᴏ ʀᴏᴋᴇɪɴ"
-  purge: "ᴍᴇssᴀɢᴇs ᴋᴏ ᴅᴇʟᴇᴛᴇ ᴋᴀʀᴇɪɴ (ʀᴇᴘʟʏ)"
-  pin: "ᴍᴇssᴀɢᴇ ᴘɪɴ ᴋᴀʀᴇɪɴ (ʀᴇᴘʟʏ)"
-  unpin: "ᴘɪɴɴᴇᴅ ᴍᴇssᴀɢᴇ ʜᴀᴛᴀʏᴇɪɴ"
-  ban: "ᴜsᴇʀ ᴋᴏ ʙᴀɴ ᴋᴀʀᴇɪɴ"
-  unban: "ᴜsᴇʀ ᴋᴏ ᴜɴʙᴀɴ ᴋᴀʀᴇɪɴ"
-  mute: "ᴜsᴇʀ ᴋᴏ ᴍᴜᴛᴇ ᴋᴀʀᴇɪɴ"
-  unmute: "ᴜsᴇʀ ᴋᴏ ᴜɴᴍᴜᴛᴇ ᴋᴀʀᴇɪɴ"
-  leaderboard: "ᴛᴏᴘ ᴄʜᴀᴛᴛᴇʀs ᴅᴇᴋʜᴇɪɴ"
-  ping: "ʙᴏᴛ ᴋɪ sᴘᴇᴇᴅ ᴄʜᴇᴄᴋ ᴋᴀʀᴇɪɴ"
+# Yuri AI - Language & Configuration File
+# Professional Stylish Formatting
 
-# ʙᴏᴛ ʀᴇsᴘᴏɴsᴇ ᴍᴇssᴀɢᴇs (ᴜsᴇᴅ ɪɴ ɪɴᴅᴇx.ᴊs)
 messages:
-  # Welcome & Help
-  welcome: "✨ <b>ʏᴜʀɪ ᴍᴀsᴛᴇʀ ᴀɪ ɪs ᴏɴʟɪɴᴇ!</b>\n\nᴍᴀɪɴ ɢʀᴏᴜᴘ ᴍᴀɴᴀɢᴇ ʙʜɪ ᴋᴀʀᴛɪ ʜᴏᴏɴ ᴀᴜʀ ʙᴀᴀᴛᴇɪɴ ʙʜɪ.\nᴄᴏᴍᴍᴀɴᴅ ʟɪsᴛ ᴋᴇ ʟɪʏᴇ /help ʟɪᴋʜᴏ."
+  # --- Welcome & Start ---
+  welcome: |
+    ✨ <b>ʜᴇʟʟᴏ {name}!</b>
+    
+    ɪ ᴀᴍ <b>ʏᴜʀɪ ᴀɪ</b>, ʏᴏᴜʀ ʜɪɢʜ-ꜱᴘᴇᴇᴅ ᴍᴀɴᴀɢᴇᴍᴇɴᴛ ᴀɴᴅ ꜱᴜʀᴠᴇɪʟʟᴀɴᴄᴇ ᴄᴏᴍᴘᴀɴɪᴏɴ.
+    
+    <b>ᴍʏ ᴄᴏʀᴇ ꜰᴜɴᴄᴛɪᴏɴꜱ:</b>
+    🛡️ ᴀᴅᴍɪɴ ꜱᴇᴄᴜʀɪᴛʏ
+    🕵️ ɢʟᴏʙᴀʟ ᴜꜱᴇʀ ᴛʀᴀᴄɪɴɢ
+    🤖 ᴀɪ ᴄʜᴀᴛ (ʜɪɴɢʟɪꜱʜ)
+    📜 ɴᴀᴍᴇ ʜɪꜱᴛᴏʀʏ ʟᴏɢꜱ
+    
+    <i>ᴜꜱᴇ ᴛʜᴇ ʙᴜᴛᴛᴏɴꜱ ʙᴇʟᴏᴡ ᴛᴏ ɴᴀᴠɪɢᴀᴛᴇ!</i> 🥂
+
+  # --- Admin Actions ---
+  action_done: "✅ <b>ᴀᴄᴛɪᴏɴ ᴇxᴇᴄᴜᴛᴇᴅ:</b> <code>{action}</code>"
+  ban_msg: "🚫 <b>ᴜꜱᴇʀ ʙᴀɴɴᴇᴅ!</b>\n👤 ᴛᴀʀɢᴇᴛ: <code>{user}</code>"
+  mute_msg: "🔇 <b>ᴜꜱᴇʀ ᴍᴜᴛᴇᴅ!</b>\n⏳ ᴅᴜʀᴀᴛɪᴏɴ: Forever"
+  purge_done: "🧹 <b>ᴘᴜʀɢᴇ ᴄᴏᴍᴘʟᴇᴛᴇᴅ!</b> ᴍᴇꜱꜱᴀɢᴇꜱ ᴄʟᴇᴀɴᴇᴅ."
+  group_locked: "🔒 <b>ɢʀᴏᴜᴘ ʟᴏᴄᴋᴇᴅ!</b> ɴᴏɴ-ᴀᴅᴍɪɴꜱ ᴄᴀɴ'ᴛ ꜱᴇɴᴅ ᴍᴇꜱꜱᴀɢᴇꜱ."
+  group_unlocked: "🔓 <b>ɢʀᴏᴜᴘ ᴜɴʟᴏᴄᴋᴇᴅ!</b> ᴇᴠᴇʀʏᴏɴᴇ ᴄᴀɴ ꜱᴘᴇᴀᴋ."
+
+  # --- AFK System ---
+  afk_set: "💤 <b>{name}</b> ɪꜱ ɴᴏᴡ ᴀꜰᴋ!\n📝 ʀᴇᴀꜱᴏɴ: <i>{reason}</i>"
+  afk_back: " Welcome back <b>{name}</b>! ʏᴏᴜ ᴡᴇʀᴇ ᴀᴡᴀʏ ꜰᴏʀ {duration}."
+
+  # --- Surveillance & Tracking ---
+  history_header: "👤 <b>ᴜꜱᴇʀ ɪᴅᴇɴᴛɪᴛʏ ʟᴏɢꜱ</b>\n━━━━━━━━━━━━━━"
+  no_history: "❌ ɴᴏ ᴘᴀꜱᴛ ʀᴇᴄᴏʀᴅꜱ ꜰᴏᴜɴᴅ ꜰᴏʀ ᴛʜɪꜱ ᴜꜱᴇʀ."
+  trace_start: "🔍 ɢᴇɴᴇʀᴀᴛɪɴɢ ᴅᴇᴇᴘ ꜰᴏʀᴇɴꜱɪᴄ ʀᴇᴘᴏʀᴛ... ᴘʟᴇᴀꜱᴇ ᴡᴀɪᴛ."
   
-  # Security & Protection
-  no_link: "🚫 ɴᴏ ʟɪɴᴋs ᴀʟʟᴏᴡᴇᴅ ʜᴇʀᴇ!"
-  bio_warn: "⚠️ <b>sᴇᴄᴜʀɪᴛʏ ᴀʟᴇʀᴛ:</b>\n{name}, ᴀᴀᴘᴋᴇ ʙɪᴏ ᴍᴇɪɴ ʟɪɴᴋ ʜᴀɪ. ᴘʀᴏᴍᴏᴛɪᴏɴ ᴀʟʟᴏᴡᴇᴅ ɴᴀʜɪ ʜᴀɪ!"
-  report_shield: "🛡️ ᴀɴᴛɪ-ʀᴇᴘᴏʀᴛ ᴍᴏᴅᴇ ᴀᴄᴛɪᴠᴀᴛᴇᴅ! ᴅᴀɴɢᴇʀᴏᴜs ᴋᴇʏᴡᴏʀᴅs ᴡɪʟʟ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ."
-  
-  # AFK System
-  afk_set: "💤 <b>{name}</b> ɪs ɴᴏᴡ ᴀғᴋ!\nʀᴇᴀsᴏɴ: <i>{reason}</i>"
-  afk_back: "ᴡᴇʟᴄᴏᴍᴇ ʙᴀᴄᴋ <b>{name}</b>, ᴀᴀᴘᴋᴀ ᴀғᴋ ʜᴀᴛᴀ ᴅɪʏᴀ ɢᴀʏᴀ ʜᴀɪ!"
-  afk_notify: "💤 <b>{name}</b> ᴀʙʜɪ ᴀғᴋ ʜᴀɪ!\nʀᴇᴀsᴏɴ: <i>{reason}</i>"
-  
-  # Auto-Clean (Copyright Protection)
-  clean_start: "🧹 <b>ᴀᴜᴛᴏ-ᴄʟᴇᴀɴ ᴀᴄᴛɪᴠᴀᴛᴇᴅ!</b>\nᴍᴇᴅɪᴀ ᴍᴇssᴀɢᴇs ʜᴀʀ <b>{hours}</b> ɢʜᴀɴᴛᴇ ᴍᴇɪɴ ᴀᴜᴛᴏ-ᴅᴇʟᴇᴛᴇ ʜᴏɴɢᴇ."
-  clean_done: "🗑️ <b>ᴄʟᴇᴀɴ-ᴜᴘ ᴄᴏᴍᴘʟᴇᴛᴇᴅ!</b>\nɢᴄ sᴇ sᴀᴀʀᴇ ᴏʟᴅ ᴍᴇᴅɪᴀ ғɪʟᴇs ʜᴀᴛᴀ ᴅɪʏᴇ ɢᴀʏᴇ ʜᴀɪɴ."
-  
-  # Admin & Tools
-  ping_msg: "⚡ ᴘɪɴɢ: <code>{time}ms</code>"
-  action_done: "✅ ᴀᴄᴛɪᴏɴ ᴄᴏᴍᴘʟᴇᴛᴇᴅ: <b>{action}</b>"
-  tag_start: "📢 ᴛᴀɢɢɪɴɢ ᴀʟʟ ᴍᴇᴍʙᴇʀs..."
+  # --- Sudo & Global ---
+  gban_msg: "🔥 <b>ɢʟᴏʙᴀʟ ʙᴀɴ ᴇxᴇᴄᴜᴛᴇᴅ!</b>\nᴛᴀʀɢᴇᴛ ɪᴅ: <code>{id}</code>\nꜱᴛᴀᴛᴜꜱ: Banned from all connected groups."
+  broadcast_start: "📢 ꜱᴛᴀʀᴛɪɴɢ ɢʟᴏʙᴀʟ ʙʀᴏᴀᴅᴄᴀꜱᴛ..."
+  broadcast_done: "✅ ʙʀᴏᴀᴅᴄᴀꜱᴛ ꜰɪɴɪꜱʜᴇᴅ! ꜱᴇɴᴛ ᴛᴏ {count} ɢʀᴏᴜᴘꜱ."
+
+  # --- Error & Misc ---
+  admin_only: "⚠️ ᴛʜɪꜱ ᴄᴏᴍᴍᴀɴᴅ ɪꜱ ᴏɴʟʏ ꜰᴏʀ ᴀᴅᴍɪɴꜱ!"
+  owner_only: "🚫 ᴀᴄᴄᴇꜱꜱ ᴅᴇɴɪᴇᴅ: ᴏᴡɴᴇʀ ᴏɴʟʏ ᴘᴏᴡᴇʀ."
+  error: "❌ ꜱᴏᴍᴇᴛʜɪɴɢ ᴡᴇɴᴛ ᴡʀᴏɴɢ. ᴄʜᴇᴄᴋ ʟᴏɢꜱ."
