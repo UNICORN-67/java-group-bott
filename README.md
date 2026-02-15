@@ -1,6 +1,6 @@
 # 🛡️ Anti-Barrier Ultimate Bot & Mini App
 
-Ek advanced Telegram Mini App aur Bot jo Next.js aur Vercel KV (Redis) ka use karke aapke group ko raiders, copyright content, aur admin abuse se bachata hai.
+Ek advanced Telegram Mini App aur Bot jo Next.js aur Vercel KV (Redis) ka use karke aapke group ko raiders, copyright content, aur admin abuse se bachata hai..
 
 ## ✨ Features
 
