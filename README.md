@@ -12,7 +12,7 @@ Ek advanced Telegram Mini App aur Bot jo Next.js aur Vercel KV (Redis) ka use ka
 
 ## 🛠️ Tech Stack
 
-- **Framework:** Next.js (App Router)
+- **Framework:** Next.js (App Router) 
 - **Database:** Vercel KV (Redis)
 - **Bot Engine:** Telegram Bot API (Webhooks)
 - **Styling:** Tailwind CSS / CSS Modules
