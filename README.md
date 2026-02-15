@@ -23,7 +23,7 @@ Ek advanced Telegram Mini App aur Bot jo Next.js aur Vercel KV (Redis) ka use ka
 Vercel dashboard par ye keys set karein:
 - `BOT_TOKEN`: BotFather se mila hua token.
 - `OWNER_ID`: Aapki numerical Telegram ID.
-- `KV_URL`: Vercel KV dashboard se.
+- `KV_URL`: Vercel KV dashboard se..
 - `KV_REST_API_TOKEN`: Vercel KV dashboard se.
 
 ### 2. Webhook Setup
