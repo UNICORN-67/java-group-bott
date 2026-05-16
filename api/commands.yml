@@ -1,0 +1,44 @@
+# Yuri AI - Language & Configuration File
+# Professional Stylish Formatting
+
+messages:
+  # --- Welcome & Start ---
+  welcome: |
+    ✨ <b>ʜᴇʟʟᴏ {name}!</b>
+    
+    ɪ ᴀᴍ <b>ʏᴜʀɪ ᴀɪ</b>, ʏᴏᴜʀ ʜɪɢʜ-ꜱᴘᴇᴇᴅ ᴍᴀɴᴀɢᴇᴍᴇɴᴛ ᴀɴᴅ ꜱᴜʀᴠᴇɪʟʟᴀɴᴄᴇ ᴄᴏᴍᴘᴀɴɪᴏɴ.
+    
+    <b>ᴍʏ ᴄᴏʀᴇ ꜰᴜɴᴄᴛɪᴏɴꜱ:</b>
+    🛡️ ᴀᴅᴍɪɴ ꜱᴇᴄᴜʀɪᴛʏ
+    🕵️ ɢʟᴏʙᴀʟ ᴜꜱᴇʀ ᴛʀᴀᴄɪɴɢ
+    🤖 ᴀɪ ᴄʜᴀᴛ (ʜɪɴɢʟɪꜱʜ)
+    📜 ɴᴀᴍᴇ ʜɪꜱᴛᴏʀʏ ʟᴏɢꜱ
+    
+    <i>ᴜꜱᴇ ᴛʜᴇ ʙᴜᴛᴛᴏɴꜱ ʙᴇʟᴏᴡ ᴛᴏ ɴᴀᴠɪɢᴀᴛᴇ!</i> 🥂
+
+  # --- Admin Actions ---
+  action_done: "✅ <b>ᴀᴄᴛɪᴏɴ ᴇxᴇᴄᴜᴛᴇᴅ:</b> <code>{action}</code>"
+  ban_msg: "🚫 <b>ᴜꜱᴇʀ ʙᴀɴɴᴇᴅ!</b>\n👤 ᴛᴀʀɢᴇᴛ: <code>{user}</code>"
+  mute_msg: "🔇 <b>ᴜꜱᴇʀ ᴍᴜᴛᴇᴅ!</b>\n⏳ ᴅᴜʀᴀᴛɪᴏɴ: Forever"
+  purge_done: "🧹 <b>ᴘᴜʀɢᴇ ᴄᴏᴍᴘʟᴇᴛᴇᴅ!</b> ᴍᴇꜱꜱᴀɢᴇꜱ ᴄʟᴇᴀɴᴇᴅ."
+  group_locked: "🔒 <b>ɢʀᴏᴜᴘ ʟᴏᴄᴋᴇᴅ!</b> ɴᴏɴ-ᴀᴅᴍɪɴꜱ ᴄᴀɴ'ᴛ ꜱᴇɴᴅ ᴍᴇꜱꜱᴀɢᴇꜱ."
+  group_unlocked: "🔓 <b>ɢʀᴏᴜᴘ ᴜɴʟᴏᴄᴋᴇᴅ!</b> ᴇᴠᴇʀʏᴏɴᴇ ᴄᴀɴ ꜱᴘᴇᴀᴋ."
+
+  # --- AFK System ---
+  afk_set: "💤 <b>{name}</b> ɪꜱ ɴᴏᴡ ᴀꜰᴋ!\n📝 ʀᴇᴀꜱᴏɴ: <i>{reason}</i>"
+  afk_back: " Welcome back <b>{name}</b>! ʏᴏᴜ ᴡᴇʀᴇ ᴀᴡᴀʏ ꜰᴏʀ {duration}."
+
+  # --- Surveillance & Tracking ---
+  history_header: "👤 <b>ᴜꜱᴇʀ ɪᴅᴇɴᴛɪᴛʏ ʟᴏɢꜱ</b>\n━━━━━━━━━━━━━━"
+  no_history: "❌ ɴᴏ ᴘᴀꜱᴛ ʀᴇᴄᴏʀᴅꜱ ꜰᴏᴜɴᴅ ꜰᴏʀ ᴛʜɪꜱ ᴜꜱᴇʀ."
+  trace_start: "🔍 ɢᴇɴᴇʀᴀᴛɪɴɢ ᴅᴇᴇᴘ ꜰᴏʀᴇɴꜱɪᴄ ʀᴇᴘᴏʀᴛ... ᴘʟᴇᴀꜱᴇ ᴡᴀɪᴛ."
+  
+  # --- Sudo & Global ---
+  gban_msg: "🔥 <b>ɢʟᴏʙᴀʟ ʙᴀɴ ᴇxᴇᴄᴜᴛᴇᴅ!</b>\nᴛᴀʀɢᴇᴛ ɪᴅ: <code>{id}</code>\nꜱᴛᴀᴛᴜꜱ: Banned from all connected groups."
+  broadcast_start: "📢 ꜱᴛᴀʀᴛɪɴɢ ɢʟᴏʙᴀʟ ʙʀᴏᴀᴅᴄᴀꜱᴛ..."
+  broadcast_done: "✅ ʙʀᴏᴀᴅᴄᴀꜱᴛ ꜰɪɴɪꜱʜᴇᴅ! ꜱᴇɴᴛ ᴛᴏ {count} ɢʀᴏᴜᴘꜱ."
+
+  # --- Error & Misc ---
+  admin_only: "⚠️ ᴛʜɪꜱ ᴄᴏᴍᴍᴀɴᴅ ɪꜱ ᴏɴʟʏ ꜰᴏʀ ᴀᴅᴍɪɴꜱ!"
+  owner_only: "🚫 ᴀᴄᴄᴇꜱꜱ ᴅᴇɴɪᴇᴅ: ᴏᴡɴᴇʀ ᴏɴʟʏ ᴘᴏᴡᴇʀ."
+  error: "❌ ꜱᴏᴍᴇᴛʜɪɴɢ ᴡᴇɴᴛ ᴡʀᴏɴɢ. ᴄʜᴇᴄᴋ ʟᴏɢꜱ."
