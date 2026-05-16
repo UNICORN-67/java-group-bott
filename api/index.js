@@ -5,7 +5,8 @@ const yaml = require('js-yaml');
 const path = require('path');
 
 // --- 1. CONFIG & SYSTEM SETUP ---
-const config = yaml.load(fs.readFileSync(path.join(__dirname, '..', 'commands.yml'), 'utf8'));
+// Note: commands.yml file aapke 'api' folder ke andar hi honi chahiye
+const config = yaml.load(fs.readFileSync(path.join(__dirname, 'commands.yml'), 'utf8'));
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const OWNER_ID = parseInt(process.env.OWNER_ID);
 const LOG_CHANNEL = process.env.LOG_CHANNEL;
@@ -56,7 +57,7 @@ const getMsg = (key, data = {}) => {
 
 // --- 3. START & HELP (INTERACTIVE) ---
 
-bot.start(async (ctx) => {
+bot.command('start', async (ctx) => {
     const welcomeText = getMsg('welcome', { name: ctx.from.first_name });
     const buttons = [
         [{ text: "➕ ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ", url: `https://t.me/${ctx.botInfo.username}?startgroup=true` }],
@@ -160,11 +161,15 @@ bot.on('text', async (ctx) => {
     }
 });
 
-// --- 6. VERCEL EXPORT ---
+// --- 6. VERCEL EXPORT (Webhook Handler) ---
 module.exports = async (req, res) => {
     try {
-        if (req.method === 'POST') await bot.handleUpdate(req.body);
-        res.status(200).send('Yuri Engine: Active');
+        if (req.method === 'POST') {
+            const update = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+            await bot.handleUpdate(update, res);
+        } else {
+            res.status(200).send('Yuri Engine: Active');
+        }
     } catch (err) {
         console.error("Vercel Error:", err);
         res.status(500).send('Error');
