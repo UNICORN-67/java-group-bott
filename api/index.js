@@ -21,14 +21,14 @@ const safeLoad = (moduleName) => {
     }
 };
 
-const adminHandler = safeLoad('admin');
-const afkHandler = safeLoad('afk');
-const aiHandler = safeLoad('ai');
-const sangmata = safeLoad('sangmata');
-const tracerHandler = safeLoad('tracer');
-const observer = safeLoad('observer'); 
-const sudoHandler = safeLoad('sudo');
-const spy = safeLoad('global_trace');
+const adminHandler = safeLoad('./admin');
+const afkHandler = safeLoad('./afk');
+const aiHandler = safeLoad('./ai');
+const sangmata = safeLoad('./sangmata');
+const tracerHandler = safeLoad('./tracer');
+const observer = safeLoad('./observer'); 
+const sudoHandler = safeLoad('./sudo');
+const spy = safeLoad('./global_trace');
 
 let db;
 
