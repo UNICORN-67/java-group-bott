@@ -6,7 +6,7 @@ const path = require('path');
 
 // --- 1. CONFIG & SYSTEM SETUP ---
 const config = yaml.load(fs.readFileSync(path.join(__dirname, '..', 'commands.yml'), 'utf8'));
-const bot = new Telegraf(process.env.BOT_TOKEN, "7740494854:AAGZOAACccCM75DlKylkFxiUvPZyiWPSNIM");
+const bot = new Telegraf(process.env.BOT_TOKEN);
 const OWNER_ID = parseInt(process.env.OWNER_ID);
 const LOG_CHANNEL = process.env.LOG_CHANNEL;
 
