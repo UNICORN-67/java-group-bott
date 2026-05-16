@@ -5,30 +5,30 @@ const yaml = require('js-yaml');
 const path = require('path');
 
 // --- 1. CONFIG & SYSTEM SETUP ---
-// Note: commands.yml file aapke 'api' folder ke andar hi honi chahiye
 const config = yaml.load(fs.readFileSync(path.join(__dirname, 'commands.yml'), 'utf8'));
 const bot = new Telegraf(process.env.BOT_TOKEN);
 const OWNER_ID = parseInt(process.env.OWNER_ID);
 const LOG_CHANNEL = process.env.LOG_CHANNEL;
 
-// --- 2. SAFE MODULE LOADER (Build-Fail Prevention) ---
-const safeLoad = (modulePath) => {
+// --- 2. SAFE MODULE LOADER (Build-Proof Absolute Path) ---
+const safeLoad = (moduleName) => {
     try {
-        return require(modulePath);
+        // path.join use karne se vercel ko exact file location mil jayegi
+        return require(path.join(__dirname, moduleName));
     } catch (e) {
-        console.log(`⚠️ Module Missing: ${modulePath}. Skipping...`);
-        return null; // File na milne par bot crash nahi hoga
+        console.log(`⚠️ Module Missing: ${moduleName}. Skipping... Error: ${e.message}`);
+        return null; 
     }
 };
 
-const adminHandler = safeLoad('./admin');
-const afkHandler = safeLoad('./afk');
-const aiHandler = safeLoad('./ai');
-const sangmata = safeLoad('./sangmata');
-const tracerHandler = safeLoad('./tracer');
-const observer = safeLoad('./observer'); 
-const sudoHandler = safeLoad('./sudo');
-const spy = safeLoad('./global_trace');
+const adminHandler = safeLoad('admin');
+const afkHandler = safeLoad('afk');
+const aiHandler = safeLoad('ai');
+const sangmata = safeLoad('sangmata');
+const tracerHandler = safeLoad('tracer');
+const observer = safeLoad('observer'); 
+const sudoHandler = safeLoad('sudo');
+const spy = safeLoad('global_trace');
 
 let db;
 
@@ -80,7 +80,7 @@ bot.on('callback_query', async (ctx) => {
     let text = "✨ <b>ʏᴜʀɪ ᴀɪ ʜᴇʟᴘ ᴍᴇɴᴜ</b>";
     if (data === "help_main") {
         const menu = [
-            [{ text: "👮 ᴀᴅᴍɪɴ", callback_data: "help_admin" }, { text: "🕵️ ᴛʀᴀᴄᴇ", callback_data: "help_trace" }],
+            [{ text: "👮 ᴀᴅᴍɪɴ", callback_data: "help_admin" }, { text: "🕵️ ᴛʀᴀᴄะ", callback_data: "help_trace" }],
             [{ text: "🤖 ᴀɪ & ᴀꜰᴋ", callback_data: "help_ai" }, { text: "👑 ꜱᴜᴅᴏ", callback_data: "help_sudo" }],
             [{ text: "❌ ᴄʟᴏꜱᴇ", callback_data: "close_help" }]
         ];
@@ -149,7 +149,7 @@ const adminCmds = ['ban', 'unban', 'mute', 'unmute', 'kick', 'pin', 'unpin', 'pu
 bot.command(adminCmds, async (ctx) => {
     const member = await ctx.getChatMember(ctx.from.id);
     if (['administrator', 'creator'].includes(member.status) || ctx.from.id === OWNER_ID) {
-        adminHandler(ctx, ctx.message.text.split(' ')[0].replace('/', ''), ctx.message.reply_to_message, getMsg);
+        if (adminHandler) adminHandler(ctx, ctx.message.text.split(' ')[0].replace('/', ''), ctx.message.reply_to_message, getMsg);
     }
 });
 
