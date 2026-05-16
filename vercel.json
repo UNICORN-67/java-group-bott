@@ -2,12 +2,5 @@
   "version": 2,
   "rewrites": [
     { "source": "/(.*)", "destination": "/api/index.js" }
-  ],
-  "env": {
-    "BOT_TOKEN": "@bot_token",
-    "MONGO_URI": "@mongo_uri",
-    "OWNER_ID": "@owner_id",
-    "LOG_CHANNEL": "@log_channel",
-    "OPENAI_API_KEY": "@openai_api_key"
-  }
+  ]
 }
